@@ -20,6 +20,7 @@ function Home() {
   }, []);
 
   const sectionStyle = {
+    fontFamily: "'Archivo Black', sans-serif",
     maxWidth: "1200px",
     margin: "40px auto",
     padding: "0 20px",
@@ -41,7 +42,7 @@ function Home() {
     <div>
       {/* Секция брендов */}
       <section style={sectionStyle}>
-        <h2>Бренды</h2>
+        <h2>Brands</h2>
         <div style={gridStyle}>
           {brands.map((brand) => (
             <BrandCard key={brand.brand_id} brand={brand} />
@@ -51,7 +52,7 @@ function Home() {
 
       {/* Секция топ продаж */}
       <section style={sectionStyle}>
-        <h2>Топ 10 продаж</h2>
+        <h2>Top 10</h2>
         <div style={productsGridStyle}>
           {topProducts.map((product) => (
             <ProductCard key={product.product_id} product={product} />

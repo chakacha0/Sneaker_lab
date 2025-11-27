@@ -2,6 +2,7 @@ import React from "react";
 
 function ProductCard({ product }) {
     const cardStyle = {
+        fontFamily: "'Archivo Black', sans-serif",
         background: "#fff",
         borderRadius: "12px",
         boxShadow: "0 3px 8px rgba(0,0,0,0.1)",

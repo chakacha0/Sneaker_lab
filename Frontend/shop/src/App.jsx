@@ -1,17 +1,24 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
+import Fut from "./components/Fut"
 import Home from "./pages/Home";
 import Catalog from "./pages/Catalog";
+import Register from "./pages/Registe";
 
 function App() {
   return (
     <>
       <Header />
+
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/catalog" element={<Catalog />} />
+        <Route path="/catalog" element={<Catalog />}/>
+         <Route path="/register" element={<Register />} />
       </Routes>
+
+      <Fut />
+      
     </>
   );
 }

@@ -2,6 +2,7 @@ import React from "react";
 
 function BrandCard({ brand }) {
   const cardStyle = {
+    fontFamily: "'Archivo Black', sans-serif",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
