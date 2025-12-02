@@ -1,43 +1,169 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { addToFavourites, removeFromFavourites, checkFavourite } from "../api/favourites";
+import { getImageUrl } from "../utils/imageUrl";
 
 function ProductCard({ product }) {
+    const navigate = useNavigate();
+    const [isFavourite, setIsFavourite] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+    
+    // Получаем пользователя из localStorage
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    
+    // Проверяем, находится ли товар в избранном
+    useEffect(() => {
+        if (user && user.user_id) {
+            checkFavourite(user.user_id, product.product_id, product.size || null)
+                .then((data) => {
+                    setIsFavourite(data.is_favourite);
+                    setIsChecking(false);
+                })
+                .catch(() => {
+                    setIsChecking(false);
+                });
+        } else {
+            setIsChecking(false);
+        }
+    }, [user, product.product_id, product.size]);
+    
+    const handleFavouriteClick = async (e) => {
+        e.stopPropagation(); // Предотвращаем переход на страницу товара
+        
+        if (!user || !user.user_id) {
+            alert("Войдите в аккаунт, чтобы добавлять товары в избранное");
+            return;
+        }
+        
+        try {
+            if (isFavourite) {
+                await removeFromFavourites(user.user_id, product.product_id, product.size || null);
+                setIsFavourite(false);
+            } else {
+                await addToFavourites(user.user_id, product.product_id, product.size || null);
+                setIsFavourite(true);
+            }
+        } catch (error) {
+            console.error("Ошибка работы с избранным:", error);
+            alert("Ошибка: " + error.message);
+        }
+    };
+
     const cardStyle = {
-        fontFamily: "'Archivo Black', sans-serif",
+        fontFamily: "'Google Sans Flex', sans-serif",
         background: "#fff",
         borderRadius: "12px",
-        boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
         cursor: "pointer",
-        transition: "transform 0.2s",
+        transition: "all 0.3s ease",
+        border: "1px solid #ddd",
     };
 
     const imageStyle = {
-        background: "#f0f0f0",
-        height: "150px",
+        background: "#f5f5f5",
+        height: "200px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        overflow: "hidden",
     };
 
     const infoStyle = {
-        padding: "10px",
+        padding: "15px",
+        background: "#fff",
     };
 
-    const nameStyle = { fontSize: "16px", margin: "0 0 6px 0" };
-    const brandStyle = { color: "#777", fontSize: "13px", marginBottom: "6px" };
-    const priceStyle = { fontWeight: "bold", fontSize: "15px", color: "#333" };
+    const nameStyle = { 
+        fontSize: "16px", 
+        margin: "0 0 8px 0",
+        color: "#333",
+        fontWeight: "600",
+    };
+    const brandStyle = { 
+        color: "#FF6B35", 
+        fontSize: "12px", 
+        marginBottom: "8px",
+        textTransform: "uppercase",
+        letterSpacing: "1px",
+        fontWeight: "600",
+    };
+    const priceStyle = { 
+        fontWeight: "bold", 
+        fontSize: "18px", 
+        color: "#FF6B35",
+        textShadow: "0 0 8px rgba(255, 107, 53, 0.5)",
+    };
+
+    const heartStyle = {
+        position: "absolute",
+        top: "10px",
+        right: "10px",
+        width: "32px",
+        height: "32px",
+        cursor: "pointer",
+        background: "rgba(255, 255, 255, 0.9)",
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "all 0.3s ease",
+        zIndex: 10,
+        border: "1px solid rgba(255, 107, 53, 0.5)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    };
 
     return (
         <div
-            style={cardStyle}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+            style={{ ...cardStyle, position: "relative" }}
+            onClick={() => navigate(`/product/${product.product_id}`)}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-8px)";
+                e.currentTarget.style.boxShadow = "0 8px 25px rgba(0,0,0,0.15), 0 0 30px rgba(255, 107, 53, 0.2)";
+                e.currentTarget.style.borderColor = "#FF6B35";
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)";
+                e.currentTarget.style.borderColor = "#ddd";
+            }}
         >
+            {/* Иконка избранного */}
+            {!isChecking && (
+                <div
+                    style={heartStyle}
+                    onClick={handleFavouriteClick}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 107, 53, 0.9)";
+                        e.currentTarget.style.transform = "scale(1.1)";
+                        e.currentTarget.style.borderColor = "#FF6B35";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isFavourite ? "rgba(255, 107, 53, 0.2)" : "rgba(255, 255, 255, 0.9)";
+                        e.currentTarget.style.transform = "scale(1)";
+                        e.currentTarget.style.borderColor = isFavourite ? "#FF6B35" : "rgba(255, 107, 53, 0.5)";
+                    }}
+                >
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill={isFavourite ? "#FF6B35" : "none"}
+                        stroke={isFavourite ? "#FF6B35" : "#333"}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </div>
+            )}
+            
             <div style={imageStyle}>
                 <img
-                    src={product.image_url || "https://via.placeholder.com/400x300?text=No+Image"}
+                    src={getImageUrl(product.image_url) || "https://via.placeholder.com/400x300?text=No+Image"}
                     alt={product.name}
                 />
             </div>

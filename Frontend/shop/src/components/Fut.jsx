@@ -1,29 +1,41 @@
 function Fut() {
 
     const footerStyle = {
-        marginTop: "auto",       // прижимает футер вниз при flex-верстке
-        padding: "30px 20px",
-        backgroundColor: "#111",
-        color: "#fff",
+        marginTop: "60px",
+        width: "100%",
+        padding: "20px 40px",
+        backgroundColor: "#fff",
+        color: "#333",
         textAlign: "center",
-        fontFamily: "'Archivo Black', sans-serif",
-        boxShadow: "0 -2px 6px rgba(0,0,0,0.2)", // лёгкая тень сверху
+        fontFamily: "'Fragment Mono', monospace",
+        boxShadow: "0 -2px 6px rgba(0,0,0,0.1)",
+        boxSizing: "border-box",
+        borderTop: "2px solid #FF6B35",
     };
+
+
 
     const footerTopStyle = {
         marginBottom: "15px",
     };
 
     const brandStyle = {
-        fontSize: "20px",
-        fontWeight: "700",
-        letterSpacing: "1px",
+        fontFamily: "'Unbounded', sans-serif",
+        fontSize: "24px",
+        fontWeight: "900",
+        letterSpacing: "2px",
         display: "block",
+        color: "#FF6B35",
+        textShadow: "0 0 10px rgba(255, 107, 53, 0.5)",
+        marginBottom: "8px",
+        textTransform: "uppercase",
     };
 
     const sloganStyle = {
         fontSize: "14px",
-        color: "#aaa",
+        color: "#666",
+        letterSpacing: "1px",
+        fontFamily: "'Google Sans Flex', sans-serif",
     };
 
     const footerLinksStyle = {
@@ -35,15 +47,18 @@ function Fut() {
     };
 
     const footerLinkStyle = {
-        color: "#ff661fff",
+        color: "#FF6B35",
         textDecoration: "none",
         fontSize: "14px",
-        transition: "color 0.3s",
+        transition: "all 0.3s ease",
+        fontWeight: "600",
+        fontFamily: "'Google Sans Flex', sans-serif",
     };
 
     const footerBottomStyle = {
         fontSize: "12px",
-        color: "#777",
+        color: "#666",
+        fontFamily: "'Google Sans Flex', sans-serif",
     };
 
     const copyrightStyle = {
@@ -55,7 +70,7 @@ function Fut() {
         <footer style={footerStyle}>
             <div style={footerTopStyle}>
                 <span style={brandStyle}>SNEAKER LAB</span>
-                <span style={sloganStyle}>Твоя пара — твой стиль</span>
+                <span style={sloganStyle}>Your pair — your style</span>
             </div>
 
             <div style={footerLinksStyle}>
@@ -67,7 +82,7 @@ function Fut() {
 
             <div style={footerBottomStyle}>
                 <span style={copyrightStyle}>
-                    © 2025 Sneaker Lab. Все права защищены.
+                    © 2025 Sneaker Lab. All rights reserved.
                 </span>
             </div>
         </footer>

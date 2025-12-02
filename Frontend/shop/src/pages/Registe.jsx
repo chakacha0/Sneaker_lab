@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { registerUser } from "../api/users";
 
 function Register() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -10,6 +12,7 @@ function Register() {
     phone_number: "",
   });
   const [message, setMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,8 +23,17 @@ function Register() {
     try {
       const result = await registerUser(form);
       setMessage(result.message);
+      setIsSuccess(true);
+      
+      // Переход на страницу ввода кода через 1.5 секунды
+      if (result.email_sent) {
+        setTimeout(() => {
+          navigate("/verify-code", { state: { email: form.email } });
+        }, 1500);
+      }
     } catch (error) {
       setMessage(error.message);
+      setIsSuccess(false);
     }
   };
 
@@ -77,6 +89,13 @@ const messageStyle = {
   color: "#d00",
 };
 
+const successMessageStyle = {
+  marginTop: "10px",
+  fontSize: "14px",
+  color: "#28a745",
+  lineHeight: "1.6",
+};
+
 
   return (
     <div style={formStyle}>
@@ -104,7 +123,11 @@ const messageStyle = {
     </div>
     <button type="submit" style={buttonStyle}>Registration</button>
   </form>
-  {message && <p style={messageStyle}>{message}</p>}
+  {message && (
+    <p style={isSuccess ? successMessageStyle : messageStyle}>
+      {message}
+    </p>
+  )}
 </div>
 
   );
