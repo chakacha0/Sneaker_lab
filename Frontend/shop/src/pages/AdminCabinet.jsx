@@ -7,9 +7,13 @@ import AdminBrandsList from "../components/admin/AdminBrandsList";
 import AdminProductsList from "../components/admin/AdminProductsList";
 import AdminCategoriesList from "../components/admin/AdminCategoriesList";
 import AdminAdministratorsList from "../components/admin/AdminAdministratorsList";
+import AdminPromoCodesList from "../components/admin/AdminPromoCodesList";
 import AddBrandModal from "../components/admin/AddBrandModal";
 import EditBrandModal from "../components/admin/EditBrandModal";
 import DeleteBrandConfirmModal from "../components/admin/DeleteBrandConfirmModal";
+import AddPromoCodeModal from "../components/admin/AddPromoCodeModal";
+import EditPromoCodeModal from "../components/admin/EditPromoCodeModal";
+import DeletePromoCodeConfirmModal from "../components/admin/DeletePromoCodeConfirmModal";
 import AddCategoryModal from "../components/admin/AddCategoryModal";
 import EditCategoryModal from "../components/admin/EditCategoryModal";
 import DeleteCategoryConfirmModal from "../components/admin/DeleteCategoryConfirmModal";
@@ -24,6 +28,7 @@ import { fetchBrands, createBrand, updateBrand, deleteBrand } from "../api/brand
 import { fetchProducts, fetchProductSizes, createProduct, addProductStock, updateProduct, deleteProduct, checkProductStock } from "../api/products";
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../api/categories";
 import { fetchAdmins, searchUsersByEmail, promoteToAdmin, removeAdminRole } from "../api/admins";
+import { fetchPromoCodes, createPromoCode, updatePromoCode, deletePromoCode } from "../api/promo_codes";
 import { getImageUrl } from "../utils/imageUrl";
 import { 
   containerStyle, 
@@ -103,6 +108,22 @@ function AdminCabinet() {
   const [productImagePreview, setProductImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [promoCodes, setPromoCodes] = useState([]);
+  const [promoCodesLoading, setPromoCodesLoading] = useState(false);
+  const [isAddPromoCodeModalOpen, setIsAddPromoCodeModalOpen] = useState(false);
+  const [isEditPromoCodeModalOpen, setIsEditPromoCodeModalOpen] = useState(false);
+  const [isDeletePromoCodeConfirmModalOpen, setIsDeletePromoCodeConfirmModalOpen] = useState(false);
+  const [editingPromoCode, setEditingPromoCode] = useState(null);
+  const [deletingPromoCode, setDeletingPromoCode] = useState(null);
+  const [newPromoCode, setNewPromoCode] = useState({
+    code: "",
+    discount_percent: null,
+    discount_amount: null,
+    valid_from: null,
+    valid_to: null,
+    min_order_price: null,
+    usage_limit: null
+  });
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -803,6 +824,142 @@ function AdminCabinet() {
     }
   };
 
+  const loadPromoCodes = async () => {
+    setPromoCodesLoading(true);
+    try {
+      const data = await fetchPromoCodes();
+      setPromoCodes(data || []);
+    } catch (error) {
+      console.error("Ошибка загрузки промокодов:", error);
+      setPromoCodes([]);
+    } finally {
+      setPromoCodesLoading(false);
+    }
+  };
+
+  const handleAddPromoCode = async (e) => {
+    e.preventDefault();
+    
+    if (!newPromoCode.code.trim()) {
+      setMessage("Код промокода обязателен");
+      return;
+    }
+
+    if (!newPromoCode.discount_percent && !newPromoCode.discount_amount) {
+      setMessage("Необходимо указать либо процент скидки, либо сумму скидки");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      await createPromoCode(newPromoCode);
+      setMessage("Промокод успешно добавлен!");
+      
+      setNewPromoCode({
+        code: "",
+        discount_percent: null,
+        discount_amount: null,
+        valid_from: null,
+        valid_to: null,
+        min_order_price: null,
+        usage_limit: null
+      });
+      
+      setTimeout(() => {
+        setIsAddPromoCodeModalOpen(false);
+        loadPromoCodes();
+        setMessage("");
+      }, 1500);
+    } catch (error) {
+      setMessage(error.message || "Ошибка при добавлении промокода");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditPromoCode = (promoCode) => {
+    setEditingPromoCode(promoCode);
+    setNewPromoCode({
+      code: promoCode.code || "",
+      discount_percent: promoCode.discount_percent || null,
+      discount_amount: promoCode.discount_amount || null,
+      valid_from: promoCode.valid_from || null,
+      valid_to: promoCode.valid_to || null,
+      min_order_price: promoCode.min_order_price || null,
+      usage_limit: promoCode.usage_limit || null
+    });
+    setIsEditPromoCodeModalOpen(true);
+    setMessage("");
+  };
+
+  const handleUpdatePromoCode = async (e) => {
+    e.preventDefault();
+    
+    if (!newPromoCode.code.trim()) {
+      setMessage("Код промокода обязателен");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      await updatePromoCode(editingPromoCode.promo_id, newPromoCode);
+      setMessage("Промокод успешно обновлен!");
+      
+      setTimeout(() => {
+        setIsEditPromoCodeModalOpen(false);
+        setEditingPromoCode(null);
+        setNewPromoCode({
+          code: "",
+          discount_percent: null,
+          discount_amount: null,
+          valid_from: null,
+          valid_to: null,
+          min_order_price: null,
+          usage_limit: null
+        });
+        loadPromoCodes();
+        setMessage("");
+      }, 1500);
+    } catch (error) {
+      setMessage(error.message || "Ошибка при обновлении промокода");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePromoCode = (promoCode) => {
+    setDeletingPromoCode(promoCode);
+    setIsDeletePromoCodeConfirmModalOpen(true);
+    setMessage("");
+  };
+
+  const handleConfirmDeletePromoCode = async () => {
+    if (!deletingPromoCode) return;
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      await deletePromoCode(deletingPromoCode.promo_id);
+      setMessage("Промокод успешно удален!");
+      
+      setTimeout(() => {
+        setIsDeletePromoCodeConfirmModalOpen(false);
+        setDeletingPromoCode(null);
+        loadPromoCodes();
+        setMessage("");
+      }, 1500);
+    } catch (error) {
+      setMessage(error.message || "Ошибка при удалении промокода");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleTabChange = (tab) => {
     console.log("Switching to tab:", tab);
     setActiveTab(tab);
@@ -814,6 +971,8 @@ function AdminCabinet() {
       loadAdminCategories();
     } else if (tab === "administrators") {
       loadAdmins();
+    } else if (tab === "promo-codes") {
+      loadPromoCodes();
     }
   };
 
@@ -897,6 +1056,16 @@ function AdminCabinet() {
             adminsLoading={adminsLoading}
             onAddAdministrator={() => setIsAddAdministratorModalOpen(true)}
             onRemoveAdmin={handleRemoveAdmin}
+          />
+        )}
+
+        {activeTab === "promo-codes" && (
+          <AdminPromoCodesList
+            promoCodes={promoCodes}
+            promoCodesLoading={promoCodesLoading}
+            onAddPromoCode={() => setIsAddPromoCodeModalOpen(true)}
+            onEditPromoCode={handleEditPromoCode}
+            onDeletePromoCode={handleDeletePromoCode}
           />
         )}
       </div>
@@ -1112,6 +1281,72 @@ function AdminCabinet() {
         }}
         removingAdmin={removingAdmin}
         onConfirm={handleConfirmRemoveAdmin}
+        isSubmitting={isSubmitting}
+        message={message}
+      />
+
+      {/* Модальные окна промокодов */}
+      <AddPromoCodeModal
+        isOpen={isAddPromoCodeModalOpen}
+        onClose={() => {
+          if (!isSubmitting) {
+            setIsAddPromoCodeModalOpen(false);
+            setMessage("");
+            setNewPromoCode({
+              code: "",
+              discount_percent: null,
+              discount_amount: null,
+              valid_from: null,
+              valid_to: null,
+              min_order_price: null,
+              usage_limit: null
+            });
+          }
+        }}
+        newPromoCode={newPromoCode}
+        setNewPromoCode={setNewPromoCode}
+        onSubmit={handleAddPromoCode}
+        isSubmitting={isSubmitting}
+        message={message}
+      />
+
+      <EditPromoCodeModal
+        isOpen={isEditPromoCodeModalOpen}
+        onClose={() => {
+          if (!isSubmitting) {
+            setIsEditPromoCodeModalOpen(false);
+            setEditingPromoCode(null);
+            setMessage("");
+            setNewPromoCode({
+              code: "",
+              discount_percent: null,
+              discount_amount: null,
+              valid_from: null,
+              valid_to: null,
+              min_order_price: null,
+              usage_limit: null
+            });
+          }
+        }}
+        editingPromoCode={editingPromoCode}
+        newPromoCode={newPromoCode}
+        setNewPromoCode={setNewPromoCode}
+        onSubmit={handleUpdatePromoCode}
+        isSubmitting={isSubmitting}
+        message={message}
+      />
+
+      <DeletePromoCodeConfirmModal
+        isOpen={isDeletePromoCodeConfirmModalOpen}
+        onClose={() => {
+          if (!isSubmitting) {
+            setIsDeletePromoCodeConfirmModalOpen(false);
+            setDeletingPromoCode(null);
+            setMessage("");
+          }
+        }}
+        deletingPromoCode={deletingPromoCode}
+        onConfirm={handleConfirmDeletePromoCode}
         isSubmitting={isSubmitting}
         message={message}
       />

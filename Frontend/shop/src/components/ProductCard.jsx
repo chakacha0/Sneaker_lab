@@ -63,12 +63,14 @@ function ProductCard({ product }) {
     };
 
     const imageStyle = {
-        background: "#f5f5f5",
+        background: "#fff",
         height: "200px",
+        width: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+        position: "relative",
     };
 
     const infoStyle = {
@@ -165,12 +167,18 @@ function ProductCard({ product }) {
                 <img
                     src={getImageUrl(product.image_url) || "https://via.placeholder.com/400x300?text=No+Image"}
                     alt={product.name}
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        objectPosition: "center",
+                    }}
                 />
             </div>
             <div style={infoStyle}>
                 <h2 style={nameStyle}>{product.name}</h2>
                 <p style={brandStyle}>{product.brand}</p>
-                <p style={priceStyle}>{product.price} €</p>
+                <p style={priceStyle}>{product.price} $</p>
             </div>
         </div>
     );

@@ -16,13 +16,13 @@ function Home() {
     
     // Загружаем товары для мужчин и женщин
     fetchProducts({ gender: "male" }).then((products) => {
-      // Берем первые 8 товаров для мужчин
-      setMenProducts(products.slice(0, 8) || []);
+      // Берем первые 5 товаров для мужчин
+      setMenProducts(products.slice(0, 5) || []);
     });
     
     fetchProducts({ gender: "female" }).then((products) => {
-      // Берем первые 8 товаров для женщин
-      setWomenProducts(products.slice(0, 8) || []);
+      // Берем первые 5 товаров для женщин
+      setWomenProducts(products.slice(0, 5) || []);
     });
   }, []);
 

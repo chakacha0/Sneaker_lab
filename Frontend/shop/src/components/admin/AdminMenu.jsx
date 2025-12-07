@@ -127,6 +127,29 @@ export default function AdminMenu({ activeTab, onTabChange, onLogout }) {
         Administrators
       </div>
 
+      <div
+        style={activeTab === "promo-codes" ? activeMenuItemStyle : menuItemStyle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onTabChange("promo-codes");
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== "promo-codes") {
+            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.borderColor = "#FF6B35";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== "promo-codes") {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "transparent";
+          }
+        }}
+      >
+        Promo Codes
+      </div>
+
       <button
         onClick={onLogout}
         style={logoutButtonStyle}

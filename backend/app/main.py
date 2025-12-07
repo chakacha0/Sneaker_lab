@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import products, brands, users, cart, categories, favourites, admins
+from app.routes import products, brands, users, cart, categories, favourites, admins, promo_codes, addresses, orders, reviews
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -23,6 +23,10 @@ app.include_router(users.router)
 app.include_router(cart.router)
 app.include_router(favourites.router)
 app.include_router(admins.router)
+app.include_router(promo_codes.router)
+app.include_router(addresses.router)
+app.include_router(orders.router)
+app.include_router(reviews.router)
 
 # --- Статические файлы ---
 # Получаем абсолютный путь к директории static относительно текущего файла

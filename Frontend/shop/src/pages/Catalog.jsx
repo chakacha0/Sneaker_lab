@@ -275,7 +275,7 @@ function Catalog() {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+    gridTemplateColumns: "repeat(5, 1fr)",
     gap: "25px",
   };
 

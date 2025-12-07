@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCart, removeCartItem, updateCartItemQuantity } from "../api/cart";
 import AuthModal from "../components/AuthModal";
+import CheckoutModal from "../components/CheckoutModal";
 import { getImageUrl } from "../utils/imageUrl";
 
 function Cart() {
@@ -9,6 +10,7 @@ function Cart() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -28,7 +30,7 @@ function Cart() {
       const cartData = await getCart(user.user_id);
       setCart(cartData);
     } catch (error) {
-      setMessage(error.message || "Ошибка загрузки корзины");
+      setMessage(error.message || "Error loading cart");
     } finally {
       setLoading(false);
     }
@@ -38,10 +40,10 @@ function Cart() {
     try {
       await removeCartItem(cartItemId);
       await loadCart();
-      setMessage("Товар удален из корзины");
+      setMessage("Item removed from cart");
       setTimeout(() => setMessage(""), 2000);
     } catch (error) {
-      setMessage(error.message || "Ошибка удаления товара");
+      setMessage(error.message || "Error removing item");
     }
   };
 
@@ -51,7 +53,7 @@ function Cart() {
     }
     
     if (newQuantity > availableQuantity) {
-      setMessage(`Недостаточно товара на складе. Доступно: ${availableQuantity}`);
+      setMessage(`Not enough items in stock. Available: ${availableQuantity}`);
       setTimeout(() => setMessage(""), 3000);
       return;
     }
@@ -61,23 +63,23 @@ function Cart() {
       await loadCart();
       setMessage("");
     } catch (error) {
-      setMessage(error.message || "Ошибка обновления количества");
+      setMessage(error.message || "Error updating quantity");
       setTimeout(() => setMessage(""), 3000);
     }
   };
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "40px" }}>
-        Загрузка...
+      <div style={{ textAlign: "center", padding: "40px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+        Loading...
       </div>
     );
   }
 
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <div style={{ textAlign: "center", padding: "60px", maxWidth: "800px", margin: "0 auto" }}>
-        <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>Корзина пуста</h2>
+      <div style={{ textAlign: "center", padding: "60px", maxWidth: "800px", margin: "0 auto", fontFamily: "'Google Sans Flex', sans-serif" }}>
+        <h2 style={{ fontSize: "24px", marginBottom: "20px", fontFamily: "'Google Sans Flex', sans-serif" }}>Cart is empty</h2>
         <button
           onClick={() => navigate("/catalog")}
           style={{
@@ -88,9 +90,10 @@ function Cart() {
             border: "none",
             borderRadius: "8px",
             cursor: "pointer",
+            fontFamily: "'Google Sans Flex', sans-serif",
           }}
         >
-          Перейти в каталог
+          Go to Catalog
         </button>
         <AuthModal
           isOpen={isAuthModalOpen}
@@ -112,6 +115,7 @@ function Cart() {
     display: "flex",
     gap: "40px",
     flexWrap: "wrap",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const itemsContainerStyle = {
@@ -155,12 +159,14 @@ function Cart() {
     fontSize: "18px",
     fontWeight: "600",
     marginBottom: "8px",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const itemDetailsStyle = {
     color: "#666",
     fontSize: "14px",
     marginBottom: "8px",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const quantityControlStyle = {
@@ -181,6 +187,7 @@ function Cart() {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const removeButtonStyle = {
@@ -191,12 +198,14 @@ function Cart() {
     fontSize: "14px",
     textDecoration: "underline",
     marginTop: "8px",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const summaryTitleStyle = {
     fontSize: "20px",
     fontWeight: "600",
     marginBottom: "20px",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const totalStyle = {
@@ -205,6 +214,7 @@ function Cart() {
     marginTop: "20px",
     paddingTop: "20px",
     borderTop: "2px solid #ddd",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const checkoutButtonStyle = {
@@ -218,21 +228,23 @@ function Cart() {
     borderRadius: "8px",
     cursor: "pointer",
     marginTop: "20px",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   return (
     <div style={containerStyle}>
       <div style={itemsContainerStyle}>
-        <h1 style={{ fontSize: "32px", marginBottom: "30px" }}>Корзина</h1>
+        <h1 style={{ fontSize: "32px", marginBottom: "30px", fontFamily: "'Google Sans Flex', sans-serif" }}>Cart</h1>
         
         {message && (
           <div
             style={{
               padding: "12px",
               borderRadius: "8px",
-              backgroundColor: message.includes("удален") ? "#d4edda" : "#f8d7da",
-              color: message.includes("удален") ? "#155724" : "#721c24",
+              backgroundColor: message.includes("removed") || message.includes("successfully") ? "#d4edda" : "#f8d7da",
+              color: message.includes("removed") || message.includes("successfully") ? "#155724" : "#721c24",
               marginBottom: "20px",
+              fontFamily: "'Google Sans Flex', sans-serif",
             }}
           >
             {message}
@@ -249,16 +261,16 @@ function Cart() {
             <div style={itemInfoStyle}>
               <h3 style={itemTitleStyle}>{item.name}</h3>
               <p style={itemDetailsStyle}>
-                Бренд: {item.brand || "Не указан"}
+                Brand: {item.brand || "Not specified"}
               </p>
               <p style={itemDetailsStyle}>
-                Размер: {item.size}
+                Size: {item.size}
               </p>
               <p style={{ ...itemDetailsStyle, fontWeight: "600", fontSize: "16px" }}>
-                Цена: {item.price} €
+                Price: {item.price} $
               </p>
               <div style={quantityControlStyle}>
-                <span>Количество:</span>
+                <span style={{ fontFamily: "'Google Sans Flex', sans-serif" }}>Quantity:</span>
                 <button
                   style={quantityButtonStyle}
                   onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1, item.available_quantity || 0)}
@@ -266,7 +278,7 @@ function Cart() {
                 >
                   -
                 </button>
-                <span style={{ fontSize: "16px", fontWeight: "600", minWidth: "30px", textAlign: "center" }}>
+                <span style={{ fontSize: "16px", fontWeight: "600", minWidth: "30px", textAlign: "center", fontFamily: "'Google Sans Flex', sans-serif" }}>
                   {item.quantity}
                 </span>
                 <button
@@ -281,8 +293,8 @@ function Cart() {
                   +
                 </button>
                 {item.available_quantity !== undefined && (
-                  <span style={{ fontSize: "12px", color: "#666", marginLeft: "8px" }}>
-                    (Доступно: {item.available_quantity})
+                  <span style={{ fontSize: "12px", color: "#666", marginLeft: "8px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                    (Available: {item.available_quantity})
                   </span>
                 )}
               </div>
@@ -290,23 +302,23 @@ function Cart() {
                 style={removeButtonStyle}
                 onClick={() => handleRemoveItem(item.cart_item_id)}
               >
-                Удалить
+                Remove
               </button>
             </div>
-            <div style={{ fontSize: "18px", fontWeight: "600" }}>
-              {(item.price * item.quantity).toFixed(2)} €
+            <div style={{ fontSize: "18px", fontWeight: "600", fontFamily: "'Google Sans Flex', sans-serif" }}>
+              {(item.price * item.quantity).toFixed(2)} $
             </div>
           </div>
         ))}
       </div>
 
       <div style={summaryStyle}>
-        <h2 style={summaryTitleStyle}>Итого</h2>
+        <h2 style={summaryTitleStyle}>Total</h2>
         <div style={totalStyle}>
-          {cart.total.toFixed(2)} €
+          {cart.total.toFixed(2)} $
         </div>
-        <button style={checkoutButtonStyle} onClick={() => alert("Оформление заказа будет реализовано позже")}>
-          Оформить заказ
+        <button style={checkoutButtonStyle} onClick={() => setIsCheckoutModalOpen(true)}>
+          Checkout
         </button>
       </div>
 
@@ -317,6 +329,17 @@ function Cart() {
           if (localStorage.getItem("user")) {
             loadCart();
           }
+        }}
+      />
+
+      <CheckoutModal
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        cart={cart}
+        onOrderSuccess={() => {
+          loadCart(); // Reload cart after successful order
+          setMessage("Order successfully placed!");
+          setTimeout(() => setMessage(""), 3000);
         }}
       />
     </div>

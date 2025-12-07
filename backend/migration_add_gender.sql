@@ -14,3 +14,6 @@ CHECK (gender IS NULL OR gender IN ('male', 'female', 'unisex'));
 COMMENT ON COLUMN products.gender IS 'Пол: male - мужские, female - женские, unisex - унисекс';
 
 
+
+
+

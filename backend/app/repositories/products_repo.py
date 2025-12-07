@@ -1,6 +1,24 @@
 from app.database import get_connection
 
 
+def _set_operation_username(cur, username: str = None):
+    """
+    Устанавливает имя пользователя в переменной сессии PostgreSQL для логирования операций.
+    Если username не указан, будет использоваться current_user из БД.
+    
+    Args:
+        cur: Курсор базы данных
+        username: Имя пользователя (опционально). Если None, используется current_user
+    """
+    if username:
+        # Устанавливаем переменную сессии с именем пользователя
+        cur.execute("SET LOCAL app.username = %s;", (username,))
+    else:
+        # Если username не указан, используем current_user из БД
+        # Переменная будет установлена функцией get_operation_username() в триггере
+        pass
+
+
 def get_all_products():
     conn = get_connection()
     cur = conn.cursor()
@@ -282,7 +300,7 @@ def get_product_by_id(product_id: int):
 
     return row
 
-def create_product(name: str, description: str = None, price: float = None, brand_id: int = None, category_id: int = None, gender: str = None, image_url: str = None):
+def create_product(name: str, description: str = None, price: float = None, brand_id: int = None, category_id: int = None, gender: str = None, image_url: str = None, username: str = None):
     """
     Создает новый товар
     
@@ -294,6 +312,7 @@ def create_product(name: str, description: str = None, price: float = None, bran
         category_id: ID категории (опционально)
         gender: Пол ('male', 'female', 'unisex') (опционально)
         image_url: URL изображения товара (опционально)
+        username: Имя пользователя для логирования (опционально)
     
     Returns:
         dict с информацией о созданном товаре
@@ -302,6 +321,9 @@ def create_product(name: str, description: str = None, price: float = None, bran
     cur = conn.cursor()
     
     try:
+        # Устанавливаем имя пользователя для логирования
+        _set_operation_username(cur, username)
+        
         # Создаем товар
         cur.execute(
             """
@@ -369,7 +391,7 @@ def has_stock(product_id: int):
         cur.close()
         conn.close()
 
-def update_product(product_id: int, name: str = None, description: str = None, price: float = None, brand_id: int = None, category_id: int = None, gender: str = None, image_url: str = None):
+def update_product(product_id: int, name: str = None, description: str = None, price: float = None, brand_id: int = None, category_id: int = None, gender: str = None, image_url: str = None, username: str = None):
     """
     Обновляет информацию о товаре
     
@@ -382,6 +404,7 @@ def update_product(product_id: int, name: str = None, description: str = None, p
         category_id: ID категории (опционально)
         gender: Пол (опционально)
         image_url: URL изображения (опционально)
+        username: Имя пользователя для логирования (опционально)
     
     Returns:
         dict с обновленной информацией о товаре
@@ -390,6 +413,9 @@ def update_product(product_id: int, name: str = None, description: str = None, p
     cur = conn.cursor()
     
     try:
+        # Устанавливаем имя пользователя для логирования
+        _set_operation_username(cur, username)
+        
         # Формируем список полей для обновления
         updates = []
         params = []
@@ -476,13 +502,14 @@ def update_product(product_id: int, name: str = None, description: str = None, p
         cur.close()
         conn.close()
 
-def delete_product(product_id: int):
+def delete_product(product_id: int, username: str = None):
     """
     Удаляет товар из базы данных
     Также удаляет связанные записи из product_images и product_stock
     
     Args:
         product_id: ID товара
+        username: Имя пользователя для логирования (опционально)
     
     Returns:
         dict с информацией об удаленном товаре или None если товар не найден
@@ -491,6 +518,9 @@ def delete_product(product_id: int):
     cur = conn.cursor()
     
     try:
+        # Устанавливаем имя пользователя для логирования
+        _set_operation_username(cur, username)
+        
         # Получаем информацию о товаре перед удалением
         cur.execute(
             """

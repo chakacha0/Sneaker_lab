@@ -12,3 +12,6 @@ DROP INDEX IF EXISTS idx_email_verification_token;
 CREATE INDEX IF NOT EXISTS idx_verification_code ON users(verification_code);
 
 
+
+
+
