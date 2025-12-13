@@ -17,6 +17,8 @@ function CheckoutModal({ isOpen, onClose, cart, onOrderSuccess }) {
   const [messageType, setMessageType] = useState("error"); // "error" or "success"
   const [promoInfo, setPromoInfo] = useState(null); // { final_total, promo_valid, promo_message, discount }
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false); // Флаг успешного оформления заказа
+  const [orderData, setOrderData] = useState(null); // Данные о созданном заказе
   const promoCodeRef = useRef(""); // Для проверки актуальности промокода при асинхронных операциях
   const lastCheckedCodeRef = useRef(""); // Для предотвращения повторных запросов
 
@@ -36,6 +38,8 @@ function CheckoutModal({ isOpen, onClose, cart, onOrderSuccess }) {
       setPromoCode("");
       setMessage("");
       setPromoInfo(null);
+      setOrderSuccess(false);
+      setOrderData(null);
       promoCodeRef.current = "";
       lastCheckedCodeRef.current = "";
     }
@@ -159,16 +163,20 @@ function CheckoutModal({ isOpen, onClose, cart, onOrderSuccess }) {
       };
 
       const result = await createOrder(orderData);
+      
+      // Сохраняем данные о заказе и показываем экран успеха
+      setOrderData(result);
+      setOrderSuccess(true);
       setMessage("Order successfully placed!");
       setMessageType("success");
 
-      // Закрываем модальное окно и вызываем callback через 1.5 секунды
+      // Закрываем модальное окно и вызываем callback через 4 секунды (увеличено с 1.5)
       setTimeout(() => {
         onClose();
         if (onOrderSuccess) {
           onOrderSuccess();
         }
-      }, 1500);
+      }, 4000);
     } catch (error) {
       setMessage(error.message || "Error placing order");
       setMessageType("error");
@@ -330,20 +338,104 @@ function CheckoutModal({ isOpen, onClose, cart, onOrderSuccess }) {
     color: "#d00",
   };
 
+  const handleClose = () => {
+    if (orderSuccess) {
+      // Если заказ успешно оформлен, закрываем с вызовом callback
+      onClose();
+      if (onOrderSuccess) {
+        onOrderSuccess();
+      }
+    } else {
+      // Иначе просто закрываем
+      onClose();
+    }
+  };
+
   return (
-    <div style={overlayStyle} onClick={onClose}>
+    <div style={overlayStyle} onClick={orderSuccess ? undefined : onClose}>
       <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={headerStyle}>
-          <h2 style={titleStyle}>Checkout</h2>
-          <button style={closeButtonStyle} onClick={onClose} disabled={isLoading}>
-            ×
-          </button>
+          <h2 style={titleStyle}>{orderSuccess ? "Order Confirmation" : "Checkout"}</h2>
+          {!orderSuccess && (
+            <button style={closeButtonStyle} onClick={onClose} disabled={isLoading}>
+              ×
+            </button>
+          )}
         </div>
 
         {/* Content */}
         <div style={contentStyle}>
-          <form onSubmit={handleSubmit}>
+          {/* Экран успешного оформления заказа */}
+          {orderSuccess && orderData ? (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ fontSize: "64px", marginBottom: "20px" }}>✓</div>
+              <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#28a745", marginBottom: "16px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                Order Successfully Placed!
+              </h2>
+              <div style={{ backgroundColor: "#f0f0f0", borderRadius: "8px", padding: "20px", marginBottom: "24px" }}>
+                <div style={{ fontSize: "16px", color: "#666", marginBottom: "8px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                  Order Number:
+                </div>
+                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#000", marginBottom: "16px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                  #{orderData.order?.order_id || orderData.order_id || "N/A"}
+                </div>
+                <div style={{ fontSize: "16px", color: "#666", marginBottom: "8px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                  Total Amount:
+                </div>
+                <div style={{ fontSize: "20px", fontWeight: "bold", color: "#FF6B35", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                  {(() => {
+                    // Пытаемся получить цену из разных возможных структур ответа
+                    const totalPrice = orderData.order?.total_price || orderData.total_price;
+                    if (totalPrice) {
+                      return parseFloat(totalPrice).toFixed(2);
+                    }
+                    // Если нет в ответе, используем промокод или корзину
+                    if (promoInfo && promoInfo.promo_valid) {
+                      return promoInfo.final_total.toFixed(2);
+                    }
+                    return cart.total.toFixed(2);
+                  })()} $
+                </div>
+              </div>
+              <p style={{ fontSize: "14px", color: "#666", marginBottom: "24px", fontFamily: "'Google Sans Flex', sans-serif" }}>
+                Thank you for your order! You will receive a confirmation email shortly.
+              </p>
+              <button
+                onClick={() => {
+                  onClose();
+                  if (onOrderSuccess) {
+                    onOrderSuccess();
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  backgroundColor: "#FF6B35",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  marginTop: "20px",
+                  transition: "all 0.3s",
+                  fontFamily: "'Google Sans Flex', sans-serif",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#FF8C42";
+                  e.target.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "#FF6B35";
+                  e.target.style.transform = "translateY(0)";
+                }}
+              >
+                Close
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
             {/* Address Form */}
             <div style={formGroupStyle}>
               <label style={labelStyle}>
@@ -511,6 +603,7 @@ function CheckoutModal({ isOpen, onClose, cart, onOrderSuccess }) {
 
             {message && <div style={messageStyle}>{message}</div>}
           </form>
+          )}
         </div>
       </div>
     </div>

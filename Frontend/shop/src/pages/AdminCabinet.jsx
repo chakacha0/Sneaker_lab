@@ -8,6 +8,14 @@ import AdminProductsList from "../components/admin/AdminProductsList";
 import AdminCategoriesList from "../components/admin/AdminCategoriesList";
 import AdminAdministratorsList from "../components/admin/AdminAdministratorsList";
 import AdminPromoCodesList from "../components/admin/AdminPromoCodesList";
+import AdminReports from "../components/admin/AdminReports";
+import ProductCard from "../components/ProductCard";
+import ReviewModal from "../components/ReviewModal";
+import { getUserFavourites } from "../api/favourites";
+import { getCart } from "../api/cart";
+import { getUserOrders } from "../api/orders";
+import { getUserReviewForProduct, getUserReviewForOrderItem } from "../api/reviews";
+import { getImageUrl } from "../utils/imageUrl";
 import AddBrandModal from "../components/admin/AddBrandModal";
 import EditBrandModal from "../components/admin/EditBrandModal";
 import DeleteBrandConfirmModal from "../components/admin/DeleteBrandConfirmModal";
@@ -29,7 +37,6 @@ import { fetchProducts, fetchProductSizes, createProduct, addProductStock, updat
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from "../api/categories";
 import { fetchAdmins, searchUsersByEmail, promoteToAdmin, removeAdminRole } from "../api/admins";
 import { fetchPromoCodes, createPromoCode, updatePromoCode, deletePromoCode } from "../api/promo_codes";
-import { getImageUrl } from "../utils/imageUrl";
 import { 
   containerStyle, 
   contentStyle, 
@@ -133,6 +140,12 @@ function AdminCabinet() {
     gender: "",
     image: null
   });
+  const [favourites, setFavourites] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedProductForReview, setSelectedProductForReview] = useState(null);
+  const [userReviews, setUserReviews] = useState({});
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -153,6 +166,11 @@ function AdminCabinet() {
     
     setUser(userData);
     setLoading(false);
+
+    // Загружаем данные в зависимости от активной вкладки
+    if (userData && userData.user_id) {
+      loadTabData(userData.user_id, "info");
+    }
   }, [navigate]);
 
   const handleLogout = () => {
@@ -160,6 +178,90 @@ function AdminCabinet() {
     setUser(null);
     navigate("/");
     window.location.reload();
+  };
+
+  const loadTabData = async (userId, tab) => {
+    try {
+      if (tab === "favourites") {
+        const data = await getUserFavourites(userId);
+        setFavourites(data || []);
+      } else if (tab === "cart") {
+        const data = await getCart(userId);
+        setCartItems(data?.items || []);
+      } else if (tab === "orders") {
+        const data = await getUserOrders(userId);
+        setOrders(data || []);
+        // Загружаем отзывы для всех элементов заказов по order_item_id
+        if (data && data.length > 0) {
+          const reviewsMap = {};
+          for (const order of data) {
+            if (order.items) {
+              for (const item of order.items) {
+                if (item.order_item_id) {
+                  try {
+                    const review = await getUserReviewForOrderItem(userId, item.order_item_id);
+                    if (review) {
+                      reviewsMap[item.order_item_id] = review;
+                    }
+                  } catch (error) {
+                    console.error(`Ошибка загрузки отзыва для order_item ${item.order_item_id}:`, error);
+                  }
+                }
+              }
+            }
+          }
+          setUserReviews(reviewsMap);
+        }
+      }
+    } catch (error) {
+      console.error(`Ошибка загрузки данных для ${tab}:`, error);
+      if (tab === "favourites") {
+        setFavourites([]);
+      } else if (tab === "cart") {
+        setCartItems([]);
+      } else if (tab === "orders") {
+        setOrders([]);
+      }
+    }
+  };
+
+  const handleOpenReviewModal = (item) => {
+    setSelectedProductForReview(item);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setSelectedProductForReview(null);
+  };
+
+  const handleReviewSubmitted = async () => {
+    // Перезагружаем отзывы после отправки
+    if (user && user.user_id && selectedProductForReview) {
+      try {
+        // Если есть order_item_id, загружаем отзыв по нему, иначе по product_id
+        let review;
+        if (selectedProductForReview.order_item_id) {
+          review = await getUserReviewForOrderItem(user.user_id, selectedProductForReview.order_item_id);
+          if (review) {
+            setUserReviews(prev => ({
+              ...prev,
+              [selectedProductForReview.order_item_id]: review
+            }));
+          }
+        } else {
+          review = await getUserReviewForProduct(user.user_id, selectedProductForReview.product_id);
+          if (review) {
+            setUserReviews(prev => ({
+              ...prev,
+              [selectedProductForReview.product_id]: review
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки отзыва:", error);
+      }
+    }
   };
 
   const loadBrands = async () => {
@@ -973,6 +1075,8 @@ function AdminCabinet() {
       loadAdmins();
     } else if (tab === "promo-codes") {
       loadPromoCodes();
+    } else if (user && user.user_id) {
+      loadTabData(user.user_id, tab);
     }
   };
 
@@ -1067,6 +1171,443 @@ function AdminCabinet() {
             onEditPromoCode={handleEditPromoCode}
             onDeletePromoCode={handleDeletePromoCode}
           />
+        )}
+
+        {activeTab === "reports" && <AdminReports />}
+
+        {activeTab === "favourites" && (
+          <div>
+            <h2 style={titleStyle}>Favourites</h2>
+            {favourites.length > 0 ? (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: "25px",
+              }}>
+                {favourites.map((fav) => (
+                  <ProductCard key={fav.fav_id} product={fav} />
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "#666",
+                fontSize: "18px",
+                fontFamily: "'Google Sans Flex', sans-serif",
+              }}>
+                <p>You don't have any favourite items yet</p>
+                <button
+                  onClick={() => navigate("/catalog")}
+                  style={{
+                    marginTop: "20px",
+                    padding: "12px 24px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    background: "#FF6B35",
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 4px 15px rgba(255, 107, 53, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "#FF8C42";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "#FF6B35";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+                  }}
+                >
+                  Go to Catalog
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "cart" && (
+          <div>
+            <h2 style={titleStyle}>Cart</h2>
+            {cartItems.length > 0 ? (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: "25px",
+              }}>
+                {cartItems.map((item) => (
+                  <ProductCard key={item.cart_item_id} product={item} />
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "#666",
+                fontSize: "18px",
+                fontFamily: "'Google Sans Flex', sans-serif",
+              }}>
+                <p>Your cart is empty</p>
+                <button
+                  onClick={() => navigate("/catalog")}
+                  style={{
+                    marginTop: "20px",
+                    padding: "12px 24px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    background: "#FF6B35",
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 4px 15px rgba(255, 107, 53, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "#FF8C42";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "#FF6B35";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+                  }}
+                >
+                  Go to Catalog
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "orders" && (
+          <div>
+            <h2 style={titleStyle}>Order History</h2>
+            {orders.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
+                {orders.map((order) => {
+                  const orderDate = new Date(order.created_at);
+                  const formattedDate = orderDate.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+
+                  return (
+                    <div
+                      key={order.order_id}
+                      style={{
+                        border: "2px solid #ddd",
+                        borderRadius: "12px",
+                        padding: "25px",
+                        background: "#fafafa",
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      {/* Заголовок заказа */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "20px",
+                          paddingBottom: "15px",
+                          borderBottom: "2px solid #FF6B35",
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "14px",
+                              color: "#666",
+                              textTransform: "uppercase",
+                              letterSpacing: "1px",
+                              marginBottom: "5px",
+                              fontFamily: "'Google Sans Flex', sans-serif",
+                            }}
+                          >
+                            Order #{order.order_id}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "16px",
+                              color: "#333",
+                              fontWeight: "600",
+                              fontFamily: "'Google Sans Flex', sans-serif",
+                            }}
+                          >
+                            {formattedDate}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "24px",
+                            fontWeight: "700",
+                            color: "#FF6B35",
+                            fontFamily: "'Google Sans Flex', sans-serif",
+                          }}
+                        >
+                          {parseFloat(order.total_price).toFixed(2)} $
+                        </div>
+                      </div>
+
+                      {/* Товары заказа */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                          gap: "20px",
+                        }}
+                      >
+                        {order.items && order.items.length > 0 ? (
+                          order.items.map((item) => {
+                            // Проверяем отзыв по order_item_id, если он есть, иначе по product_id (для обратной совместимости)
+                            const hasReview = item.order_item_id 
+                              ? userReviews[item.order_item_id] 
+                              : userReviews[item.product_id];
+                            return (
+                            <div
+                              key={item.order_item_id}
+                              style={{
+                                border: "1px solid #ddd",
+                                borderRadius: "8px",
+                                overflow: "hidden",
+                                background: "#fff",
+                                transition: "transform 0.2s, box-shadow 0.2s",
+                                display: "flex",
+                                flexDirection: "column",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-5px)";
+                                e.currentTarget.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                              }}
+                            >
+                              {/* Изображение товара */}
+                              <div
+                                style={{
+                                  width: "100%",
+                                  height: "200px",
+                                  background: "#f5f5f5",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  overflow: "hidden",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => navigate(`/product/${item.product_id}`)}
+                              >
+                                {item.image_url ? (
+                                  <img
+                                    src={getImageUrl(item.image_url)}
+                                    alt={item.name}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      color: "#999",
+                                      fontSize: "14px",
+                                      fontFamily: "'Google Sans Flex', sans-serif",
+                                    }}
+                                  >
+                                    No Image
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Информация о товаре */}
+                              <div style={{ padding: "15px" }}>
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#FF6B35",
+                                    textTransform: "uppercase",
+                                    marginBottom: "5px",
+                                    fontFamily: "'Google Sans Flex', sans-serif",
+                                  }}
+                                >
+                                  {item.brand || "Brand"}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "16px",
+                                    fontWeight: "600",
+                                    color: "#333",
+                                    marginBottom: "8px",
+                                    fontFamily: "'Google Sans Flex', sans-serif",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {item.name}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#666",
+                                    marginBottom: "5px",
+                                    fontFamily: "'Google Sans Flex', sans-serif",
+                                  }}
+                                >
+                                  Size: {item.size}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#666",
+                                    marginBottom: "8px",
+                                    fontFamily: "'Google Sans Flex', sans-serif",
+                                  }}
+                                >
+                                  Quantity: {item.quantity}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "18px",
+                                    fontWeight: "700",
+                                    color: "#FF6B35",
+                                    fontFamily: "'Google Sans Flex', sans-serif",
+                                    marginBottom: "12px",
+                                  }}
+                                >
+                                  {parseFloat(item.price_at_purchase).toFixed(2)} $
+                                </div>
+                                
+                                {/* Кнопка отзыва */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenReviewModal(item);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    padding: "10px",
+                                    fontSize: "12px",
+                                    fontWeight: "600",
+                                    background: hasReview ? "#4CAF50" : "#FF6B35",
+                                    color: "#000",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    transition: "all 0.3s ease",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                    fontFamily: "'Google Sans Flex', sans-serif",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.background = hasReview ? "#66BB6A" : "#FF8C42";
+                                    e.target.style.transform = "translateY(-2px)";
+                                    e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.background = hasReview ? "#4CAF50" : "#FF6B35";
+                                    e.target.style.transform = "translateY(0)";
+                                    e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+                                  }}
+                                >
+                                  {hasReview ? "✓ Отзыв оставлен" : "Написать отзыв"}
+                                </button>
+                              </div>
+                            </div>
+                            );
+                          })
+                        ) : (
+                          <div style={{ 
+                            textAlign: "center", 
+                            padding: "60px 20px", 
+                            color: "#666", 
+                            fontSize: "18px",
+                            fontFamily: "'Google Sans Flex', sans-serif",
+                            gridColumn: "1 / -1" 
+                          }}>
+                            No items in this order
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Промокод если использован */}
+                      {order.promo_code && (
+                        <div
+                          style={{
+                            marginTop: "15px",
+                            padding: "10px 15px",
+                            background: "rgba(255, 107, 53, 0.1)",
+                            borderRadius: "8px",
+                            fontSize: "14px",
+                            color: "#FF6B35",
+                            fontFamily: "'Fragment Mono', monospace",
+                          }}
+                        >
+                          Promo Code: {order.promo_code}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "#666",
+                fontSize: "18px",
+                fontFamily: "'Google Sans Flex', sans-serif",
+              }}>
+                <p>You don't have any orders yet</p>
+                <button
+                  onClick={() => navigate("/catalog")}
+                  style={{
+                    marginTop: "20px",
+                    padding: "12px 24px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    background: "#FF6B35",
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "1px",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 4px 15px rgba(255, 107, 53, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "#FF8C42";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "#FF6B35";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+                  }}
+                >
+                  Go to Catalog
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -1350,6 +1891,19 @@ function AdminCabinet() {
         isSubmitting={isSubmitting}
         message={message}
       />
+
+      {/* Модальное окно отзыва */}
+      {isReviewModalOpen && selectedProductForReview && user && (
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={handleCloseReviewModal}
+          productId={selectedProductForReview.product_id}
+          productName={selectedProductForReview.name}
+          userId={user.user_id}
+          orderItemId={selectedProductForReview.order_item_id}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   );
 }

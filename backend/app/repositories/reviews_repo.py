@@ -1,6 +1,6 @@
 from app.database import get_connection
 
-def create_review(user_id: int, product_id: int, rating: int, text: str = None):
+def create_review(user_id: int, product_id: int, rating: int, text: str = None, order_item_id: int = None):
     """
     Создает отзыв на товар
     
@@ -9,6 +9,7 @@ def create_review(user_id: int, product_id: int, rating: int, text: str = None):
         product_id: ID товара
         rating: Оценка от 1 до 5
         text: Текст отзыва (опционально)
+        order_item_id: ID элемента заказа (опционально, для привязки к конкретному заказу)
     
     Returns:
         dict с информацией о созданном отзыве
@@ -16,30 +17,46 @@ def create_review(user_id: int, product_id: int, rating: int, text: str = None):
     conn = get_connection()
     cur = conn.cursor()
     
-    # Проверяем, не оставил ли уже пользователь отзыв на этот товар
-    cur.execute(
-        """
-        SELECT review_id
-        FROM reviews
-        WHERE user_id = %s AND product_id = %s;
-        """,
-        (user_id, product_id)
-    )
-    
-    existing = cur.fetchone()
-    if existing:
-        cur.close()
-        conn.close()
-        raise ValueError("Вы уже оставили отзыв на этот товар")
+    # Если указан order_item_id, проверяем отзыв по нему
+    # Иначе проверяем по product_id (для обратной совместимости)
+    if order_item_id is not None:
+        cur.execute(
+            """
+            SELECT review_id
+            FROM reviews
+            WHERE user_id = %s AND order_item_id = %s;
+            """,
+            (user_id, order_item_id)
+        )
+        existing = cur.fetchone()
+        if existing:
+            cur.close()
+            conn.close()
+            raise ValueError("Вы уже оставили отзыв на этот товар в данном заказе")
+    else:
+        # Проверяем, не оставил ли уже пользователь отзыв на этот товар (без привязки к заказу)
+        cur.execute(
+            """
+            SELECT review_id
+            FROM reviews
+            WHERE user_id = %s AND product_id = %s AND order_item_id IS NULL;
+            """,
+            (user_id, product_id)
+        )
+        existing = cur.fetchone()
+        if existing:
+            cur.close()
+            conn.close()
+            raise ValueError("Вы уже оставили отзыв на этот товар")
     
     # Создаем отзыв
     cur.execute(
         """
-        INSERT INTO reviews (user_id, product_id, rating, text)
-        VALUES (%s, %s, %s, %s)
-        RETURNING review_id, product_id, user_id, rating, text, created_at;
+        INSERT INTO reviews (user_id, product_id, rating, text, order_item_id)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING review_id, product_id, user_id, rating, text, order_item_id, created_at;
         """,
-        (user_id, product_id, rating, text)
+        (user_id, product_id, rating, text, order_item_id)
     )
     
     review = cur.fetchone()
@@ -86,13 +103,14 @@ def get_reviews_by_product(product_id: int):
     conn.close()
     return reviews
 
-def get_user_review_for_product(user_id: int, product_id: int):
+def get_user_review_for_product(user_id: int, product_id: int, order_item_id: int = None):
     """
-    Получает отзыв пользователя для конкретного товара
+    Получает отзыв пользователя для конкретного товара или элемента заказа
     
     Args:
         user_id: ID пользователя
         product_id: ID товара
+        order_item_id: ID элемента заказа (опционально, для поиска отзыва по конкретному заказу)
     
     Returns:
         dict с информацией об отзыве или None
@@ -100,20 +118,40 @@ def get_user_review_for_product(user_id: int, product_id: int):
     conn = get_connection()
     cur = conn.cursor()
     
-    cur.execute(
-        """
-        SELECT 
-            review_id,
-            product_id,
-            user_id,
-            rating,
-            text,
-            created_at
-        FROM reviews
-        WHERE user_id = %s AND product_id = %s;
-        """,
-        (user_id, product_id)
-    )
+    if order_item_id is not None:
+        # Ищем отзыв по order_item_id
+        cur.execute(
+            """
+            SELECT 
+                review_id,
+                product_id,
+                user_id,
+                rating,
+                text,
+                order_item_id,
+                created_at
+            FROM reviews
+            WHERE user_id = %s AND order_item_id = %s;
+            """,
+            (user_id, order_item_id)
+        )
+    else:
+        # Ищем отзыв по product_id (без привязки к заказу)
+        cur.execute(
+            """
+            SELECT 
+                review_id,
+                product_id,
+                user_id,
+                rating,
+                text,
+                order_item_id,
+                created_at
+            FROM reviews
+            WHERE user_id = %s AND product_id = %s AND order_item_id IS NULL;
+            """,
+            (user_id, product_id)
+        )
     
     review = cur.fetchone()
     cur.close()

@@ -1,6 +1,9 @@
 from app.database import get_connection
 from app.repositories.cart_repo import get_cart_items, get_or_create_cart
 from app.repositories.promo_codes_repo import get_promo_code_by_code
+from app.repositories.addresses_repo import get_address_by_id
+from app.repositories.users_repo import get_user_by_id
+from app.utils.email_service import send_order_confirmation_email
 from decimal import Decimal
 
 def calculate_order_total_with_promo(order_total: float, promo_code: str = None):
@@ -108,13 +111,6 @@ def create_order(user_id: int, address_id: int, promo_code: str = None):
         # Вычисляем исходную стоимость заказа
         original_total = sum(item.get("price", 0) * item.get("quantity", 0) for item in cart_items)
         
-        # Получаем promo_id если промокод указан
-        promo_id = None
-        if promo_code:
-            promo = get_promo_code_by_code(promo_code.strip().upper())
-            if promo:
-                promo_id = promo.get("promo_id")
-        
         # Вычисляем итоговую стоимость с учетом промокода используя функцию из БД
         cur.execute(
             """
@@ -126,7 +122,18 @@ def create_order(user_id: int, address_id: int, promo_code: str = None):
         result = cur.fetchone()
         final_total = float(result.get("final_total", original_total))
         
-        # Создаем заказ
+        # Проверяем, был ли промокод реально применен
+        # Промокод считается примененным только если итоговая стоимость меньше исходной
+        promo_id = None
+        promo_applied = False
+        if promo_code and final_total < original_total:
+            # Промокод был применен, получаем его ID
+            promo = get_promo_code_by_code(promo_code.strip().upper())
+            if promo:
+                promo_id = promo.get("promo_id")
+                promo_applied = True
+        
+        # Создаем заказ (promo_id будет NULL, если промокод не был применен)
         cur.execute(
             """
             INSERT INTO orders (user_id, address_id, promo_id, total_price)
@@ -164,8 +171,8 @@ def create_order(user_id: int, address_id: int, promo_code: str = None):
                 (quantity, product_id, size)
             )
         
-        # Увеличиваем счетчик использований промокода, если он был применен
-        if promo_id:
+        # Увеличиваем счетчик использований промокода ТОЛЬКО если он был реально применен
+        if promo_applied and promo_id:
             cur.execute(
                 """
                 UPDATE promo_codes
@@ -187,6 +194,37 @@ def create_order(user_id: int, address_id: int, promo_code: str = None):
         
         # Получаем полную информацию о заказе
         order_with_items = get_order_by_id(order_id)
+        
+        # Отправляем email с подтверждением заказа
+        try:
+            # Получаем информацию о пользователе
+            user = get_user_by_id(user_id)
+            if user and user.get('email'):
+                # Получаем адрес доставки
+                address = get_address_by_id(address_id)
+                
+                if address:
+                    # Формируем имя пользователя
+                    user_name = None
+                    if user.get('first_name') or user.get('last_name'):
+                        user_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+                    
+                    # Отправляем email (не блокируем процесс, если не удалось отправить)
+                    email_sent, email_message = send_order_confirmation_email(
+                        email=user.get('email'),
+                        order_id=order_id,
+                        total_price=final_total,
+                        order_items=order_with_items.get('items', []),
+                        address=address,
+                        user_name=user_name
+                    )
+                    if email_sent:
+                        print(f"[ORDER] Email с подтверждением заказа #{order_id} отправлен на {user.get('email')}")
+                    else:
+                        print(f"[ORDER WARNING] Не удалось отправить email с подтверждением заказа #{order_id}: {email_message}")
+        except Exception as e:
+            # Не прерываем процесс создания заказа, если не удалось отправить email
+            print(f"[ORDER WARNING] Ошибка при отправке email с подтверждением заказа #{order_id}: {str(e)}")
         
         return order_with_items
         
@@ -324,3 +362,116 @@ def get_user_orders(user_id: int):
     cur.close()
     conn.close()
     return orders
+
+def get_sales_statistics(start_date=None, end_date=None):
+    """
+    Получает статистику продаж за указанный период
+    
+    Args:
+        start_date: Начальная дата (опционально, формат: 'YYYY-MM-DD')
+        end_date: Конечная дата (опционально, формат: 'YYYY-MM-DD')
+    
+    Returns:
+        dict с статистикой продаж:
+        - total_orders: общее количество заказов
+        - total_items_sold: общее количество проданных товаров
+        - total_revenue: общая выручка
+        - orders: список заказов с деталями
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Формируем условие для фильтрации по датам
+        date_condition = ""
+        params = []
+        
+        if start_date:
+            date_condition += " AND o.created_at >= %s::date"
+            params.append(start_date)
+        
+        if end_date:
+            date_condition += " AND o.created_at <= %s::timestamp"
+            # Включаем весь день - добавляем время 23:59:59
+            end_date_with_time = end_date if " " in end_date else f"{end_date} 23:59:59"
+            params.append(end_date_with_time)
+        
+        # Получаем общую статистику
+        cur.execute(
+            f"""
+            SELECT 
+                COUNT(DISTINCT o.order_id) as total_orders,
+                COALESCE(SUM(oi.quantity), 0) as total_items_sold,
+                COALESCE(SUM(o.total_price), 0) as total_revenue
+            FROM orders o
+            LEFT JOIN order_items oi ON o.order_id = oi.order_id
+            WHERE 1=1 {date_condition};
+            """,
+            params
+        )
+        
+        stats = cur.fetchone()
+        
+        # Получаем детальную информацию о заказах
+        cur.execute(
+            f"""
+            SELECT 
+                o.order_id,
+                o.user_id,
+                o.total_price,
+                o.created_at,
+                u.email,
+                u.first_name,
+                u.last_name,
+                pc.code as promo_code
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.user_id
+            LEFT JOIN promo_codes pc ON o.promo_id = pc.promo_id
+            WHERE 1=1 {date_condition}
+            ORDER BY o.created_at DESC;
+            """,
+            params
+        )
+        
+        orders = cur.fetchall()
+        
+        # Для каждого заказа получаем товары
+        for order in orders:
+            order_id = order.get("order_id")
+            cur.execute(
+                """
+                SELECT 
+                    oi.order_item_id,
+                    oi.product_id,
+                    oi.size,
+                    oi.quantity,
+                    oi.price_at_purchase,
+                    p.name as product_name,
+                    b.name as brand_name
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.product_id
+                LEFT JOIN brands b ON p.brand_id = b.brand_id
+                WHERE oi.order_id = %s;
+                """,
+                (order_id,)
+            )
+            items = cur.fetchall()
+            order["items"] = items
+        
+        result = {
+            "total_orders": stats.get("total_orders", 0) if stats else 0,
+            "total_items_sold": int(stats.get("total_items_sold", 0)) if stats else 0,
+            "total_revenue": float(stats.get("total_revenue", 0)) if stats else 0.0,
+            "orders": orders if orders else []
+        }
+        
+        return result
+    except Exception as e:
+        # Логируем ошибку для отладки
+        import traceback
+        print(f"Ошибка в get_sales_statistics: {e}")
+        traceback.print_exc()
+        raise
+    finally:
+        cur.close()
+        conn.close()

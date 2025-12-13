@@ -41,8 +41,27 @@ export async function getProductReviewStats(productId) {
   return response.json();
 }
 
-export async function getUserReviewForProduct(userId, productId) {
-  const response = await fetch(`http://localhost:8000/reviews/user/${userId}/product/${productId}`, {
+export async function getUserReviewForProduct(userId, productId, orderItemId = null) {
+  let url = `http://localhost:8000/reviews/user/${userId}/product/${productId}`;
+  if (orderItemId) {
+    url += `?order_item_id=${orderItemId}`;
+  }
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Ошибка получения отзыва");
+  }
+
+  const data = await response.json();
+  return data; // Может быть null, если отзыв не найден
+}
+
+export async function getUserReviewForOrderItem(userId, orderItemId) {
+  const response = await fetch(`http://localhost:8000/reviews/user/${userId}/order-item/${orderItemId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });

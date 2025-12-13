@@ -27,6 +27,7 @@ function Catalog() {
     brandId: brandIdFromUrl ? parseInt(brandIdFromUrl) : null,
     selectedSizes: [],
     gender: genderFromUrl || null,
+    inStock: null, // null = все, true = в наличии, false = нет в наличии
     sortBy: "created_at",
     sortOrder: "DESC",
   });
@@ -122,6 +123,12 @@ function Catalog() {
           if (filters.gender) {
             filteredResults = filteredResults.filter(p => p.gender === filters.gender);
           }
+          if (filters.inStock !== null && filters.inStock !== undefined) {
+            filteredResults = filteredResults.filter(p => {
+              const hasStock = p.has_stock !== false; // Если has_stock не false, значит есть в наличии
+              return filters.inStock ? hasStock : !hasStock;
+            });
+          }
           if (filters.selectedSizes.length > 0) {
             // Фильтрация по размерам требует дополнительной логики, пока пропускаем
           }
@@ -189,6 +196,7 @@ function Catalog() {
       brandId: null,
       selectedSizes: [],
       gender: null,
+      inStock: null,
       sortBy: "created_at",
       sortOrder: "DESC",
     });
@@ -210,19 +218,20 @@ function Catalog() {
   const filtersRowStyle = {
     display: "flex",
     flexWrap: "nowrap",
-    gap: "15px",
+    gap: "10px",
     alignItems: "flex-end",
-    overflowX: "auto",
+    overflowX: "hidden",
   };
 
   const filterGroupStyle = {
     display: "flex",
     flexDirection: "column",
     gap: "0px",
+    flexShrink: 0,
   };
 
   const labelStyle = {
-    fontSize: "11px",
+    fontSize: "10px",
     fontWeight: "600",
     color: "#666",
     textTransform: "uppercase",
@@ -233,8 +242,8 @@ function Catalog() {
   };
 
   const inputStyle = {
-    padding: "6px 10px",
-    fontSize: "13px",
+    padding: "6px 8px",
+    fontSize: "12px",
     border: "1px solid #ddd",
     borderRadius: "4px",
     outline: "none",
@@ -243,22 +252,25 @@ function Catalog() {
     transition: "all 0.3s ease",
     fontFamily: "'Google Sans Flex', sans-serif",
     width: "100%",
+    boxSizing: "border-box",
   };
 
   const selectStyle = {
     ...inputStyle,
     cursor: "pointer",
-    minWidth: "130px",
+    minWidth: "100px",
+    maxWidth: "120px",
   };
 
   const sizesSelectStyle = {
     ...selectStyle,
-    minWidth: "150px",
+    minWidth: "110px",
+    maxWidth: "130px",
   };
 
   const buttonStyle = {
-    padding: "6px 10px",
-    fontSize: "12px",
+    padding: "6px 12px",
+    fontSize: "11px",
     fontWeight: "700",
     background: "#FF6B35",
     color: "#fff",
@@ -266,11 +278,12 @@ function Catalog() {
     borderRadius: "4px",
     cursor: "pointer",
     textTransform: "uppercase",
-    letterSpacing: "1px",
+    letterSpacing: "0.5px",
     transition: "all 0.3s ease",
     fontFamily: "'Google Sans Flex', sans-serif",
     whiteSpace: "nowrap",
     height: "fit-content",
+    flexShrink: 0,
   };
 
   const gridStyle = {
@@ -304,10 +317,22 @@ function Catalog() {
             <label style={labelStyle}>Price from</label>
             <input
               type="number"
+              min="0"
+              step="0.01"
               value={filters.minPrice || ""}
-              onChange={(e) => handleFilterChange("minPrice", e.target.value ? parseFloat(e.target.value) : null)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || value === null) {
+                  handleFilterChange("minPrice", null);
+                } else {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue) && numValue >= 0) {
+                    handleFilterChange("minPrice", numValue);
+                  }
+                }
+              }}
               placeholder={priceRange.min_price || "0"}
-              style={{...inputStyle, width: "100px"}}
+              style={{...inputStyle, width: "90px"}}
             />
           </div>
           
@@ -316,10 +341,22 @@ function Catalog() {
             <label style={labelStyle}>Price to</label>
             <input
               type="number"
+              min="0"
+              step="0.01"
               value={filters.maxPrice || ""}
-              onChange={(e) => handleFilterChange("maxPrice", e.target.value ? parseFloat(e.target.value) : null)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || value === null) {
+                  handleFilterChange("maxPrice", null);
+                } else {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue) && numValue >= 0) {
+                    handleFilterChange("maxPrice", numValue);
+                  }
+                }
+              }}
               placeholder={priceRange.max_price || "1000"}
-              style={{...inputStyle, width: "100px"}}
+              style={{...inputStyle, width: "90px"}}
             />
           </div>
 
@@ -329,7 +366,7 @@ function Catalog() {
             <select
               value={filters.categoryId || ""}
               onChange={(e) => handleFilterChange("categoryId", e.target.value ? parseInt(e.target.value) : null)}
-              style={{...selectStyle, minWidth: "150px"}}
+              style={{...selectStyle, minWidth: "110px", maxWidth: "130px"}}
             >
               <option value="">All categories</option>
               {categories.map((cat) => (
@@ -346,7 +383,7 @@ function Catalog() {
             <select
               value={filters.brandId || ""}
               onChange={(e) => handleFilterChange("brandId", e.target.value ? parseInt(e.target.value) : null)}
-              style={{...selectStyle, minWidth: "150px"}}
+              style={{...selectStyle, minWidth: "110px", maxWidth: "130px"}}
             >
               <option value="">All brands</option>
               {brands.map((brand) => (
@@ -363,7 +400,7 @@ function Catalog() {
             <select
               value={filters.gender || ""}
               onChange={(e) => handleFilterChange("gender", e.target.value || null)}
-              style={{...selectStyle, minWidth: "120px"}}
+              style={{...selectStyle, minWidth: "100px", maxWidth: "110px"}}
             >
               <option value="">All</option>
               <option value="male">Male</option>
@@ -384,6 +421,7 @@ function Catalog() {
                 justifyContent: "space-between",
                 cursor: "pointer",
                 minHeight: "32px",
+                width: "110px",
               }}
             >
               <span style={{fontSize: "13px", color: filters.selectedSizes.length > 0 ? "#333" : "#999"}}>
@@ -465,6 +503,23 @@ function Catalog() {
             )}
           </div>
 
+          {/* Фильтр по наличию */}
+          <div style={filterGroupStyle}>
+            <label style={labelStyle}>Availability</label>
+            <select
+              value={filters.inStock === null ? "" : filters.inStock ? "true" : "false"}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleFilterChange("inStock", value === "" ? null : value === "true");
+              }}
+              style={{...selectStyle, minWidth: "100px", maxWidth: "120px"}}
+            >
+              <option value="">All</option>
+              <option value="true">In Stock</option>
+              <option value="false">Out of Stock</option>
+            </select>
+          </div>
+
           {/* Сортировка */}
           <div style={filterGroupStyle}>
             <label style={labelStyle}>Sort</label>
@@ -475,7 +530,7 @@ function Catalog() {
                 handleFilterChange("sortBy", sortBy);
                 handleFilterChange("sortOrder", sortOrder);
               }}
-              style={{...selectStyle, minWidth: "150px"}}
+              style={{...selectStyle, minWidth: "120px", maxWidth: "140px"}}
             >
               <option value="created_at_DESC">Default</option>
               <option value="price_ASC">Price: Low to High</option>

@@ -22,6 +22,9 @@ export async function fetchProducts(filters = {}) {
   if (filters.gender) {
     params.append('gender', filters.gender);
   }
+  if (filters.inStock !== undefined && filters.inStock !== null) {
+    params.append('in_stock', filters.inStock.toString());
+  }
   if (filters.sortBy) {
     params.append('sort_by', filters.sortBy);
   }

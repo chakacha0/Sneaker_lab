@@ -76,6 +76,10 @@ function ProductCard({ product }) {
     const infoStyle = {
         padding: "15px",
         background: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        justifyContent: "space-between",
     };
 
     const nameStyle = { 
@@ -83,6 +87,11 @@ function ProductCard({ product }) {
         margin: "0 0 8px 0",
         color: "#333",
         fontWeight: "600",
+        minHeight: "48px", // Фиксированная высота для названия (2 строки)
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
     };
     const brandStyle = { 
         color: "#FF6B35", 
@@ -92,11 +101,32 @@ function ProductCard({ product }) {
         letterSpacing: "1px",
         fontWeight: "600",
     };
+    
+    const priceContainerStyle = {
+        marginTop: "auto", // Прижимаем цену к низу
+        paddingTop: "8px",
+    };
+    
     const priceStyle = { 
         fontWeight: "bold", 
         fontSize: "18px", 
         color: "#FF6B35",
         textShadow: "0 0 8px rgba(255, 107, 53, 0.5)",
+        margin: "0 0 8px 0",
+    };
+    
+    const outOfStockStyle = {
+        backgroundColor: "#f44336",
+        color: "#fff",
+        padding: "4px 8px",
+        borderRadius: "4px",
+        fontSize: "11px",
+        fontWeight: "600",
+        textTransform: "uppercase",
+        letterSpacing: "0.5px",
+        display: "inline-block",
+        fontFamily: "'Google Sans Flex', sans-serif",
+        marginTop: "4px",
     };
 
     const heartStyle = {
@@ -176,9 +206,19 @@ function ProductCard({ product }) {
                 />
             </div>
             <div style={infoStyle}>
-                <h2 style={nameStyle}>{product.name}</h2>
-                <p style={brandStyle}>{product.brand}</p>
-                <p style={priceStyle}>{product.price} $</p>
+                <div>
+                    <h2 style={nameStyle}>{product.name}</h2>
+                    <p style={brandStyle}>{product.brand}</p>
+                </div>
+                <div style={priceContainerStyle}>
+                    <p style={priceStyle}>{product.price} $</p>
+                    {/* Пометка "нет в наличии" - ниже цены */}
+                    {product.has_stock === false && (
+                        <div style={outOfStockStyle}>
+                            Out of Stock
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

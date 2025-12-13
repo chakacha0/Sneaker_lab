@@ -54,6 +54,7 @@ def get_filtered_products(
     brand_id=None,
     sizes=None,
     gender=None,
+    in_stock=None,
     sort_by="created_at",
     sort_order="DESC"
 ):
@@ -76,11 +77,13 @@ def get_filtered_products(
     conn = get_connection()
     cur = conn.cursor()
     
-    # Определяем, нужен ли JOIN с product_stock для фильтрации по размерам
+    # Определяем, нужен ли JOIN с product_stock для фильтрации по размерам или наличию
     needs_size_join = sizes and len(sizes) > 0
+    needs_stock_join = in_stock is not None
     
     # Базовый запрос
     # Используем подзапрос для получения первого изображения, чтобы избежать дубликатов
+    # Также добавляем информацию о наличии товара
     query = """
         SELECT DISTINCT
             p.product_id,
@@ -93,16 +96,23 @@ def get_filtered_products(
             b.brand_id,
             c.name AS category,
             c.category_id,
-            (SELECT image_url FROM product_images WHERE product_id = p.product_id LIMIT 1) AS image_url
+            (SELECT image_url FROM product_images WHERE product_id = p.product_id LIMIT 1) AS image_url,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM product_stock ps2 
+                    WHERE ps2.product_id = p.product_id AND ps2.quantity > 0
+                ) THEN true
+                ELSE false
+            END AS has_stock
         FROM products p
         LEFT JOIN brands b ON p.brand_id = b.brand_id
         LEFT JOIN categories c ON p.category_id = c.category_id
     """
     
-    # Добавляем JOIN с product_stock если нужна фильтрация по размерам
-    if needs_size_join:
+    # Добавляем JOIN с product_stock если нужна фильтрация по размерам или наличию
+    if needs_size_join or needs_stock_join:
         query += """
-            INNER JOIN product_stock ps ON p.product_id = ps.product_id
+            LEFT JOIN product_stock ps ON p.product_id = ps.product_id
         """
     
     conditions = []
@@ -138,6 +148,25 @@ def get_filtered_products(
         conditions.append(f"ps.size IN ({placeholders})")
         conditions.append("ps.quantity > 0")
         params.extend(sizes)
+    
+    # Фильтр по наличию товара
+    if in_stock is not None:
+        if in_stock:
+            # Только товары в наличии (есть хотя бы один размер с quantity > 0)
+            conditions.append("""
+                EXISTS (
+                    SELECT 1 FROM product_stock ps_stock 
+                    WHERE ps_stock.product_id = p.product_id AND ps_stock.quantity > 0
+                )
+            """)
+        else:
+            # Только товары не в наличии (нет ни одного размера с quantity > 0)
+            conditions.append("""
+                NOT EXISTS (
+                    SELECT 1 FROM product_stock ps_stock 
+                    WHERE ps_stock.product_id = p.product_id AND ps_stock.quantity > 0
+                )
+            """)
     
     # Добавляем условия
     if conditions:

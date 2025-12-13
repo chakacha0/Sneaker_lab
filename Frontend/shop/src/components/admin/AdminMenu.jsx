@@ -5,6 +5,8 @@ import {
   menuItemStyle,
   activeMenuItemStyle,
   logoutButtonStyle,
+  menuDividerStyle,
+  customerMenuTitleStyle,
 } from "./adminStyles";
 
 export default function AdminMenu({ activeTab, onTabChange, onLogout }) {
@@ -148,6 +150,103 @@ export default function AdminMenu({ activeTab, onTabChange, onLogout }) {
         }}
       >
         Promo Codes
+      </div>
+
+      <div
+        style={activeTab === "reports" ? activeMenuItemStyle : menuItemStyle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onTabChange("reports");
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== "reports") {
+            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.borderColor = "#FF6B35";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== "reports") {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "transparent";
+          }
+        }}
+      >
+        Reports
+      </div>
+
+      {/* Разделитель между админскими и покупательскими вкладками */}
+      <div>
+        <h3 style={menuTitleStyle}>Customer Menu</h3>
+      </div>
+
+      <div
+        style={activeTab === "favourites" ? activeMenuItemStyle : menuItemStyle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onTabChange("favourites");
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== "favourites") {
+            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.borderColor = "#FF6B35";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== "favourites") {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "transparent";
+          }
+        }}
+      >
+        Favourites
+      </div>
+
+      <div
+        style={activeTab === "cart" ? activeMenuItemStyle : menuItemStyle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onTabChange("cart");
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== "cart") {
+            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.borderColor = "#FF6B35";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== "cart") {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "transparent";
+          }
+        }}
+      >
+        Cart
+      </div>
+
+      <div
+        style={activeTab === "orders" ? activeMenuItemStyle : menuItemStyle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onTabChange("orders");
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== "orders") {
+            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.borderColor = "#FF6B35";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== "orders") {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "transparent";
+          }
+        }}
+      >
+        Order History
       </div>
 
       <button

@@ -262,3 +262,22 @@ export const warningBoxStyle = {
   border: "2px solid #ffc107",
   color: "#856404",
 };
+
+export const menuDividerStyle = {
+  marginTop: "30px",
+  marginBottom: "20px",
+  borderTop: "2px solid #ddd",
+  paddingTop: "20px",
+};
+
+export const customerMenuTitleStyle = {
+  fontSize: "20px",
+  fontWeight: "700",
+  color: "#666",
+  textTransform: "uppercase",
+  letterSpacing: "1px",
+  marginBottom: "20px",
+  borderBottom: "1px solid #ddd",
+  paddingBottom: "10px",
+  fontFamily: "'Fragment Mono', monospace",
+};

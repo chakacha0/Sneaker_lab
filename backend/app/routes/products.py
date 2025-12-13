@@ -45,6 +45,7 @@ def list_products(
     brand_id: Optional[int] = None,
     sizes: Optional[str] = None,  # Строка с размерами через запятую: "36,37,38"
     gender: Optional[str] = None,
+    in_stock: Optional[bool] = Query(None, description="Filter by stock availability (true = in stock, false = out of stock)"),
     sort_by: str = "created_at",
     sort_order: str = "DESC"
 ):
@@ -58,9 +59,16 @@ def list_products(
     - brand_id: ID бренда
     - sizes: размеры через запятую (например: "36,37,38")
     - gender: пол ('male', 'female', 'unisex')
+    - in_stock: фильтр по наличию (true = в наличии, false = нет в наличии)
     - sort_by: поле сортировки ('price', 'created_at', 'name')
     - sort_order: порядок сортировки ('ASC', 'DESC')
     """
+    # Валидация цен - не допускаем отрицательные значения
+    if min_price is not None and min_price < 0:
+        raise HTTPException(status_code=400, detail="Минимальная цена не может быть отрицательной")
+    if max_price is not None and max_price < 0:
+        raise HTTPException(status_code=400, detail="Максимальная цена не может быть отрицательной")
+    
     # Преобразуем строку размеров в список
     sizes_list = None
     if sizes:
@@ -79,6 +87,7 @@ def list_products(
             brand_id=brand_id,
             sizes=sizes_list,
             gender=gender,
+            in_stock=in_stock,
             sort_by=sort_by,
             sort_order=sort_order
         )

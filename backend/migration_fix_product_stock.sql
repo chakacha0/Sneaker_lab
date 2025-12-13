@@ -11,3 +11,5 @@ ADD CONSTRAINT product_stock_quantity_check CHECK (quantity >= 0);
 
 
 
+
+

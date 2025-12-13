@@ -7,7 +7,7 @@ import { getUserOrders } from "../api/orders";
 import AuthModal from "../components/AuthModal";
 import ReviewModal from "../components/ReviewModal";
 import { getImageUrl } from "../utils/imageUrl";
-import { getUserReviewForProduct } from "../api/reviews";
+import { getUserReviewForProduct, getUserReviewForOrderItem } from "../api/reviews";
 
 function Profile() {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ function Profile() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [userReviews, setUserReviews] = useState({}); // { productId: review }
+  const [userReviews, setUserReviews] = useState({}); // { orderItemId: review } или { productId: review } для обратной совместимости
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -58,26 +58,23 @@ function Profile() {
       } else if (tab === "orders") {
         const data = await getUserOrders(userId);
         setOrders(data || []);
-        // Загружаем отзывы для всех товаров в заказах
+        // Загружаем отзывы для всех элементов заказов по order_item_id
         if (data && data.length > 0) {
-          const productIds = new Set();
-          data.forEach(order => {
-            if (order.items) {
-              order.items.forEach(item => {
-                productIds.add(item.product_id);
-              });
-            }
-          });
-          
           const reviewsMap = {};
-          for (const productId of productIds) {
-            try {
-              const review = await getUserReviewForProduct(userId, productId);
-              if (review) {
-                reviewsMap[productId] = review;
+          for (const order of data) {
+            if (order.items) {
+              for (const item of order.items) {
+                if (item.order_item_id) {
+                  try {
+                    const review = await getUserReviewForOrderItem(userId, item.order_item_id);
+                    if (review) {
+                      reviewsMap[item.order_item_id] = review;
+                    }
+                  } catch (error) {
+                    console.error(`Ошибка загрузки отзыва для order_item ${item.order_item_id}:`, error);
+                  }
+                }
               }
-            } catch (error) {
-              console.error(`Ошибка загрузки отзыва для товара ${productId}:`, error);
             }
           }
           setUserReviews(reviewsMap);
@@ -109,12 +106,24 @@ function Profile() {
     // Перезагружаем отзывы после отправки
     if (user && user.user_id && selectedProduct) {
       try {
-        const review = await getUserReviewForProduct(user.user_id, selectedProduct.product_id);
-        if (review) {
-          setUserReviews(prev => ({
-            ...prev,
-            [selectedProduct.product_id]: review
-          }));
+        // Если есть order_item_id, загружаем отзыв по нему, иначе по product_id
+        let review;
+        if (selectedProduct.order_item_id) {
+          review = await getUserReviewForOrderItem(user.user_id, selectedProduct.order_item_id);
+          if (review) {
+            setUserReviews(prev => ({
+              ...prev,
+              [selectedProduct.order_item_id]: review
+            }));
+          }
+        } else {
+          review = await getUserReviewForProduct(user.user_id, selectedProduct.product_id);
+          if (review) {
+            setUserReviews(prev => ({
+              ...prev,
+              [selectedProduct.product_id]: review
+            }));
+          }
         }
       } catch (error) {
         console.error("Ошибка загрузки отзыва:", error);
@@ -617,7 +626,10 @@ function Profile() {
                       >
                         {order.items && order.items.length > 0 ? (
                           order.items.map((item) => {
-                            const hasReview = userReviews[item.product_id];
+                            // Проверяем отзыв по order_item_id, если он есть, иначе по product_id (для обратной совместимости)
+                            const hasReview = item.order_item_id 
+                              ? userReviews[item.order_item_id] 
+                              : userReviews[item.product_id];
                             return (
                             <div
                               key={item.order_item_id}
@@ -847,6 +859,7 @@ function Profile() {
           productId={selectedProduct.product_id}
           productName={selectedProduct.name}
           userId={user.user_id}
+          orderItemId={selectedProduct.order_item_id}
           onReviewSubmitted={handleReviewSubmitted}
         />
       )}

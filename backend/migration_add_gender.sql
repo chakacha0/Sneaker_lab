@@ -17,3 +17,5 @@ COMMENT ON COLUMN products.gender IS 'Пол: male - мужские, female - ж
 
 
 
+
+

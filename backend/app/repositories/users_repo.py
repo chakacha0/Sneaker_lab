@@ -82,6 +82,33 @@ def get_user_by_email(email: str):
     conn.close()
     return user
 
+def get_user_by_id(user_id: int):
+    """
+    Получает пользователя по ID
+    
+    Args:
+        user_id: ID пользователя
+    
+    Returns:
+        dict с информацией о пользователе или None, если пользователь не найден
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute(
+        """
+        SELECT user_id, role, email, first_name, last_name, phone_number, email_verified
+        FROM users
+        WHERE user_id = %s;
+        """,
+        (user_id,)
+    )
+    
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    return user
+
 def authenticate_user(email: str, password: str):
     """
     Проверяет email и пароль пользователя

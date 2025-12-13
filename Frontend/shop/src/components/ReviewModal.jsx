@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createReview } from "../api/reviews";
 
-function ReviewModal({ isOpen, onClose, productId, productName, userId, onReviewSubmitted }) {
+function ReviewModal({ isOpen, onClose, productId, productName, userId, orderItemId, onReviewSubmitted }) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [text, setText] = useState("");
@@ -27,6 +27,7 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, onReview
         product_id: productId,
         rating: rating,
         text: text || null,
+        order_item_id: orderItemId || null,
       });
       
       setMessage("Отзыв успешно отправлен!");
