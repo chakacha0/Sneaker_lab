@@ -1,6 +1,20 @@
-fastapi
-uvicorn[standard]
-psycopg2-binary
-python-dotenv
-openpyxl
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Data Validation
+pydantic>=2.5.0
+pydantic[email]>=2.5.0
+
+# Security
+bcrypt>=4.1.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Excel Reports
+openpyxl>=3.1.0
 

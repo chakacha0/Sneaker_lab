@@ -13,7 +13,7 @@ function VerifyEmail() {
     
     if (!token) {
       setStatus("error");
-      setMessage("Токен подтверждения не найден в ссылке");
+      setMessage("Verification token not found in the link");
       return;
     }
 
@@ -24,7 +24,7 @@ function VerifyEmail() {
         setMessage(result.message);
       } catch (error) {
         setStatus("error");
-        setMessage(error.message || "Ошибка при подтверждении email");
+        setMessage(error.message || "Error verifying email");
       }
     };
 
@@ -37,42 +37,55 @@ function VerifyEmail() {
     padding: "40px",
     backgroundColor: "#fff",
     borderRadius: "12px",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+    boxShadow: "0 8px 30px rgba(255, 107, 53, 0.3)",
+    border: "1px solid #ddd",
     textAlign: "center",
-    fontFamily: "'Archivo Black', sans-serif",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const titleStyle = {
-    fontSize: "24px",
+    fontSize: "28px",
+    fontWeight: "700",
     marginBottom: "20px",
-    color: "#333",
+    color: "#FF6B35",
+    textShadow: "0 0 10px rgba(255, 107, 53, 0.5)",
+    textTransform: "uppercase",
+    letterSpacing: "2px",
+    borderBottom: "2px solid #FF6B35",
+    paddingBottom: "15px",
   };
 
   const messageStyle = {
     fontSize: "16px",
     marginBottom: "30px",
-    color: status === "success" ? "#28a745" : status === "error" ? "#d00" : "#666",
+    color: status === "success" ? "#4CAF50" : status === "error" ? "#FF6B35" : "#666",
     lineHeight: "1.6",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    fontWeight: "500",
   };
 
   const buttonStyle = {
-    padding: "12px 24px",
+    padding: "14px 24px",
     fontSize: "16px",
-    fontWeight: "bold",
-    backgroundColor: "#111",
+    fontWeight: "700",
+    backgroundColor: "#FF6B35",
     color: "#fff",
     border: "none",
     borderRadius: "8px",
     cursor: "pointer",
-    transition: "background-color 0.3s",
+    transition: "all 0.3s ease",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    boxShadow: "0 4px 15px rgba(255, 107, 53, 0.3)",
   };
 
   return (
     <div style={containerStyle}>
-      <h2 style={titleStyle}>Подтверждение Email</h2>
+      <h2 style={titleStyle}>Email Verification</h2>
       
       {status === "loading" && (
-        <p style={messageStyle}>Проверка токена...</p>
+        <p style={messageStyle}>Verifying token...</p>
       )}
       
       {status === "success" && (
@@ -81,8 +94,18 @@ function VerifyEmail() {
           <button 
             style={buttonStyle}
             onClick={() => navigate("/")}
+            onMouseEnter={(e) => {
+              e.target.style.background = "#FF8C42";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "#FF6B35";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+            }}
           >
-            Перейти на главную
+            Go to Home
           </button>
         </>
       )}
@@ -92,9 +115,19 @@ function VerifyEmail() {
           <p style={messageStyle}>✗ {message}</p>
           <button 
             style={buttonStyle}
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/")}
+            onMouseEnter={(e) => {
+              e.target.style.background = "#FF8C42";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "#FF6B35";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+            }}
           >
-            Вернуться к регистрации
+            Back to Home
           </button>
         </>
       )}

@@ -225,7 +225,13 @@ const linkStyle = {
 
         {/* Иконка избранного */}
         <div
-          onClick={() => navigate("/favourites")}
+          onClick={() => {
+            if (!user) {
+              setIsAuthModalOpen(true);
+            } else {
+              navigate("/favourites");
+            }
+          }}
           style={{
             cursor: "pointer",
             width: "36px",
@@ -265,7 +271,13 @@ const linkStyle = {
 
         {/* Иконка корзины */}
         <div
-          onClick={() => navigate("/cart")}
+          onClick={() => {
+            if (!user) {
+              setIsAuthModalOpen(true);
+            } else {
+              navigate("/cart");
+            }
+          }}
           style={{
             cursor: "pointer",
             width: "32px",
@@ -336,6 +348,7 @@ const linkStyle = {
               e.currentTarget.style.background = "transparent";
             }}
           >
+            
             <svg
               width="24"
               height="24"
@@ -355,40 +368,31 @@ const linkStyle = {
             onClick={() => setIsAuthModalOpen(true)}
             style={{
               cursor: "pointer",
-              width: "36px",
-              height: "36px",
+              padding: "8px 16px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#333",
-              fontSize: "24px",
+              fontSize: "14px",
+              fontWeight: "600",
               transition: "all 0.3s ease",
-              borderRadius: "50%",
+              borderRadius: "8px",
+              fontFamily: "'Google Sans Flex', sans-serif",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "#FF6B35";
-              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.transform = "translateY(-2px)";
               e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = "#333";
-              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.background = "transparent";
             }}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+            Sign in / Sign up
           </div>
         )}
       </div>

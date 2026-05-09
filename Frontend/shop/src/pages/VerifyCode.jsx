@@ -48,12 +48,12 @@ function VerifyCode() {
     const fullCode = code.join("");
 
     if (fullCode.length !== 6) {
-      setMessage("Введите 6-значный код");
+      setMessage("Please enter a 6-digit code");
       return;
     }
 
     if (!email) {
-      setMessage("Email не найден. Пожалуйста, зарегистрируйтесь снова.");
+      setMessage("Email not found. Please register again.");
       return;
     }
 
@@ -67,7 +67,7 @@ function VerifyCode() {
         navigate("/");
       }, 2000);
     } catch (error) {
-      setMessage(error.message || "Ошибка при подтверждении кода");
+      setMessage(error.message || "Error verifying code");
     } finally {
       setIsLoading(false);
     }
@@ -79,77 +79,99 @@ function VerifyCode() {
     padding: "40px",
     backgroundColor: "#fff",
     borderRadius: "12px",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-    fontFamily: "'Archivo Black', sans-serif",
+    boxShadow: "0 8px 30px rgba(255, 107, 53, 0.3)",
+    border: "1px solid #ddd",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const titleStyle = {
-    fontSize: "24px",
+    fontSize: "28px",
+    fontWeight: "700",
     textAlign: "center",
     marginBottom: "10px",
-    color: "#333",
+    color: "#FF6B35",
+    textShadow: "0 0 10px rgba(255, 107, 53, 0.5)",
+    textTransform: "uppercase",
+    letterSpacing: "2px",
+    borderBottom: "2px solid #FF6B35",
+    paddingBottom: "15px",
   };
 
   const subtitleStyle = {
     fontSize: "14px",
     textAlign: "center",
     color: "#666",
-    marginBottom: "30px",
+    marginBottom: "20px",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    lineHeight: "1.6",
   };
 
   const codeContainerStyle = {
     display: "flex",
     justifyContent: "center",
-    gap: "10px",
+    gap: "12px",
     marginBottom: "30px",
   };
 
   const inputStyle = {
-    width: "50px",
-    height: "60px",
-    fontSize: "24px",
+    width: "55px",
+    height: "65px",
+    fontSize: "28px",
+    fontWeight: "700",
     textAlign: "center",
-    border: "2px solid #ccc",
+    border: "2px solid #ddd",
     borderRadius: "8px",
     outline: "none",
-    transition: "border-color 0.3s",
+    transition: "all 0.3s ease",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    color: "#333",
   };
 
   const buttonStyle = {
     width: "100%",
-    padding: "14px",
+    padding: "14px 24px",
     fontSize: "16px",
-    fontWeight: "bold",
-    backgroundColor: "#111",
+    fontWeight: "700",
+    backgroundColor: "#FF6B35",
     color: "#fff",
     border: "none",
     borderRadius: "8px",
     cursor: isLoading ? "not-allowed" : "pointer",
     opacity: isLoading ? 0.6 : 1,
-    transition: "background-color 0.3s",
+    transition: "all 0.3s ease",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    boxShadow: "0 4px 15px rgba(255, 107, 53, 0.3)",
   };
 
   const messageStyle = {
     marginTop: "15px",
     fontSize: "14px",
     textAlign: "center",
-    color: message.includes("успешно") ? "#28a745" : "#d00",
+    color: message.includes("successfully") || message.includes("success") || message.includes("verified") ? "#4CAF50" : "#FF6B35",
     lineHeight: "1.6",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    fontWeight: "500",
   };
 
   const emailStyle = {
     fontSize: "14px",
     textAlign: "center",
-    color: "#666",
+    color: "#FF6B35",
     marginBottom: "20px",
     fontWeight: "600",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    padding: "10px",
+    background: "rgba(255, 107, 53, 0.1)",
+    borderRadius: "8px",
   };
 
   return (
     <div style={containerStyle}>
-      <h2 style={titleStyle}>Подтверждение Email</h2>
+      <h2 style={titleStyle}>Email Verification</h2>
       <p style={subtitleStyle}>
-        Мы отправили код подтверждения на ваш email
+        We've sent a verification code to your email address. Please enter the 6-digit code below.
       </p>
 
       {email && (
@@ -171,12 +193,38 @@ function VerifyCode() {
               onPaste={index === 0 ? handlePaste : undefined}
               style={inputStyle}
               autoFocus={index === 0}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#FF6B35";
+                e.target.style.boxShadow = "0 0 15px rgba(255, 107, 53, 0.3)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#ddd";
+                e.target.style.boxShadow = "none";
+              }}
             />
           ))}
         </div>
 
-        <button type="submit" style={buttonStyle} disabled={isLoading}>
-          {isLoading ? "Проверка..." : "Подтвердить"}
+        <button
+          type="submit"
+          style={buttonStyle}
+          disabled={isLoading}
+          onMouseEnter={(e) => {
+            if (!isLoading) {
+              e.target.style.background = "#FF8C42";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isLoading) {
+              e.target.style.background = "#FF6B35";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+            }
+          }}
+        >
+          {isLoading ? "Verifying..." : "Verify Email"}
         </button>
       </form>
 
@@ -185,14 +233,22 @@ function VerifyCode() {
       <p
         style={{
           marginTop: "20px",
-          fontSize: "12px",
+          fontSize: "14px",
           textAlign: "center",
-          color: "#999",
+          color: "#666",
           cursor: "pointer",
+          fontFamily: "'Google Sans Flex', sans-serif",
+          transition: "color 0.3s ease",
         }}
-        onClick={() => navigate("/register")}
+        onClick={() => navigate("/")}
+        onMouseEnter={(e) => {
+          e.target.style.color = "#FF6B35";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.color = "#666";
+        }}
       >
-        Вернуться к регистрации
+        Back to Home
       </p>
     </div>
   );

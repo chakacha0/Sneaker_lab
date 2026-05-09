@@ -24,7 +24,7 @@ function Favourites() {
         const data = await getUserFavourites(user.user_id);
         setFavourites(data || []);
       } catch (error) {
-        console.error("Ошибка загрузки избранного:", error);
+        console.error("Error loading favourites:", error);
         setFavourites([]);
       } finally {
         setLoading(false);
@@ -96,7 +96,24 @@ function Favourites() {
           isOpen={isAuthModalOpen}
           onClose={() => {
             setIsAuthModalOpen(false);
-            navigate("/");
+            // Если пользователь авторизовался, загружаем избранное
+            const updatedUser = JSON.parse(localStorage.getItem("user") || "null");
+            if (updatedUser && updatedUser.user_id) {
+              // Перезагружаем данные избранного
+              getUserFavourites(updatedUser.user_id)
+                .then((data) => {
+                  setFavourites(data || []);
+                  setLoading(false);
+                })
+                .catch((error) => {
+                  console.error("Error loading favourites:", error);
+                  setFavourites([]);
+                  setLoading(false);
+                });
+            } else {
+              // Если пользователь не авторизовался, возвращаемся на предыдущую страницу
+              navigate(-1);
+            }
           }}
         />
       </div>

@@ -13,12 +13,12 @@ def register_user(data: dict):
     phone_number = data.get("phone_number")
 
     if not email or not password:
-        raise HTTPException(status_code=400, detail="Email и пароль обязательны")
+        raise HTTPException(status_code=400, detail="Email and password are required")
 
     try:
         user = create_user(email, password, first_name, last_name, phone_number)
         
-        # Отправляем письмо с кодом подтверждения
+        # Send verification code email
         code = user.get("verification_code")
         email_sent = False
         email_message = ""
@@ -26,14 +26,14 @@ def register_user(data: dict):
         if code:
             email_sent, email_message = send_verification_email(email, code)
         
-        # Формируем сообщение в зависимости от результата отправки
+        # Form message based on email sending result
         if email_sent:
-            if "Режим разработки" in email_message:
-                message = "Регистрация успешна! Проверьте консоль сервера для получения кода подтверждения."
+            if "Development mode" in email_message or "DEV MODE" in email_message:
+                message = "Registration successful! Check the server console for the verification code."
             else:
-                message = "Регистрация успешна! Проверьте вашу почту - мы отправили код подтверждения."
+                message = "Registration successful! Check your email - we've sent a verification code."
         else:
-            message = f"Регистрация успешна, но не удалось отправить письмо: {email_message}. Проверьте консоль сервера."
+            message = f"Registration successful, but failed to send email: {email_message}. Check the server console."
         
         return {
             "message": message,
@@ -47,7 +47,7 @@ def register_user(data: dict):
                 "phone_number": user.get("phone_number"),
                 "email_verified": user.get("email_verified", False)
             },
-            "verification_code": code if "Режим разработки" in email_message else None  # Только в режиме разработки
+            "verification_code": code if ("Development mode" in email_message or "DEV MODE" in email_message) else None  # Only in development mode
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -55,23 +55,23 @@ def register_user(data: dict):
 @router.post("/verify-email")
 def verify_email(data: dict):
     """
-    Подтверждает email пользователя по коду
+    Verifies user email by code
     """
     email = data.get("email")
     code = data.get("code")
     
     if not email or not code:
-        raise HTTPException(status_code=400, detail="Email и код подтверждения обязательны")
+        raise HTTPException(status_code=400, detail="Email and verification code are required")
     
-    # Проверяем пользователя
+    # Check user
     user = get_user_by_email(email)
     
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь с таким email не найден")
+        raise HTTPException(status_code=404, detail="User with this email not found")
     
     if user.get("email_verified"):
         return {
-            "message": "Email уже подтвержден",
+            "message": "Email is already verified",
             "user": {
                 "user_id": user.get("user_id"),
                 "email": user.get("email"),
@@ -82,14 +82,14 @@ def verify_email(data: dict):
             }
         }
     
-    # Подтверждаем email по коду
+    # Verify email by code
     verified_user = verify_email_by_code(email, code)
     
     if not verified_user:
-        raise HTTPException(status_code=400, detail="Неверный код подтверждения. Проверьте код и попробуйте снова.")
+        raise HTTPException(status_code=400, detail="Invalid verification code. Please check the code and try again.")
     
     return {
-        "message": "Email успешно подтвержден!",
+        "message": "Email successfully verified!",
         "user": {
             "user_id": verified_user.get("user_id"),
             "email": verified_user.get("email"),
@@ -103,25 +103,25 @@ def verify_email(data: dict):
 @router.post("/login")
 def login(data: dict):
     """
-    Авторизация пользователя по email и паролю
+    User authentication by email and password
     """
     email = data.get("email")
     password = data.get("password")
     
     if not email or not password:
-        raise HTTPException(status_code=400, detail="Email и пароль обязательны")
+        raise HTTPException(status_code=400, detail="Email and password are required")
     
-    # Проверяем пользователя
+    # Authenticate user
     user = authenticate_user(email, password)
     
     if not user:
-        raise HTTPException(status_code=401, detail="Неверный email или пароль")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     
     if not user.get("email_verified"):
-        raise HTTPException(status_code=403, detail="Email не подтвержден. Пожалуйста, подтвердите email перед входом.")
+        raise HTTPException(status_code=403, detail="Email not verified. Please verify your email before signing in.")
     
     return {
-        "message": "Вход выполнен успешно",
+        "message": "Sign in successful",
         "user": {
             "user_id": user.get("user_id"),
             "email": user.get("email"),

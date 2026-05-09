@@ -20,37 +20,37 @@ def send_verification_email(email: str, code: str) -> tuple[bool, str]:
         (success: bool, message: str) - результат отправки и сообщение
     """
     try:
-        # Если настройки SMTP не заданы, просто возвращаем True (для разработки)
+        # If SMTP settings are not configured, return True (for development)
         if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
             print(f"\n{'='*60}")
-            print(f"[DEV MODE] Email не настроен - код в консоли:")
+            print(f"[DEV MODE] Email not configured - code in console:")
             print(f"Email: {email}")
-            print(f"Код подтверждения: {code}")
+            print(f"Verification Code: {code}")
             print(f"{'='*60}\n")
-            return (True, f"Режим разработки. Код в консоли сервера.")
+            return (True, f"Development mode. Code in server console.")
         
-        # Создаем сообщение
+        # Create message
         msg = MIMEMultipart()
         msg['From'] = settings.EMAIL_FROM
         msg['To'] = email
-        msg['Subject'] = "Код подтверждения регистрации в SneakerLab"
+        msg['Subject'] = "SneakerLab Registration Verification Code"
         
-        # Текст письма
+        # Email body
         body = f"""
-        Здравствуйте!
+        Hello!
         
-        Спасибо за регистрацию в SneakerLab!
+        Thank you for registering with SneakerLab!
         
-        Ваш код подтверждения: {code}
+        Your verification code: {code}
         
-        Введите этот код на странице подтверждения для завершения регистрации.
+        Enter this code on the verification page to complete your registration.
         
-        Код действителен в течение 10 минут.
+        The code is valid for 10 minutes.
         
-        Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.
+        If you did not register on our website, please ignore this email.
         
-        С уважением,
-        Команда SneakerLab
+        Best regards,
+        SneakerLab Team
         """
         
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
@@ -64,18 +64,18 @@ def send_verification_email(email: str, code: str) -> tuple[bool, str]:
         print(f"[EMAIL] Авторизация успешна")
         server.send_message(msg)
         server.quit()
-        print(f"[EMAIL] Письмо успешно отправлено на {email}")
-        return (True, "Письмо отправлено успешно")
+        print(f"[EMAIL] Email successfully sent to {email}")
+        return (True, "Email sent successfully")
     except smtplib.SMTPAuthenticationError as e:
-        error_msg = f"Ошибка авторизации SMTP: {str(e)}. Проверьте SMTP_USER и SMTP_PASSWORD в .env"
+        error_msg = f"SMTP authentication error: {str(e)}. Check SMTP_USER and SMTP_PASSWORD in .env"
         print(f"[EMAIL ERROR] {error_msg}")
         return (False, error_msg)
     except smtplib.SMTPException as e:
-        error_msg = f"Ошибка SMTP: {str(e)}"
+        error_msg = f"SMTP error: {str(e)}"
         print(f"[EMAIL ERROR] {error_msg}")
         return (False, error_msg)
     except Exception as e:
-        error_msg = f"Ошибка при отправке email: {str(e)}"
+        error_msg = f"Error sending email: {str(e)}"
         print(f"[EMAIL ERROR] {error_msg}")
         return (False, error_msg)
 
@@ -95,10 +95,10 @@ def send_order_confirmation_email(email: str, order_id: int, total_price: float,
         (success: bool, message: str) - результат отправки и сообщение
     """
     try:
-        # Если настройки SMTP не заданы, просто возвращаем True (для разработки)
+        # If SMTP settings are not configured, return True (for development)
         if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
             print(f"\n{'='*60}")
-            print(f"[DEV MODE] Email не настроен - информация о заказе в консоли:")
+            print(f"[DEV MODE] Email not configured - order information in console:")
             print(f"Email: {email}")
             print(f"Order number: #{order_id}")
             print(f"Order total: {total_price:.2f} $")
@@ -107,9 +107,9 @@ def send_order_confirmation_email(email: str, order_id: int, total_price: float,
             for item in order_items:
                 print(f"  - {item.get('name', '')} (Size: {item.get('size', '')}, Quantity: {item.get('quantity', '')}, Price: {item.get('price_at_purchase', 0)} $)")
             print(f"{'='*60}\n")
-            return (True, f"Режим разработки. Информация о заказе в консоли сервера.")
+            return (True, f"Development mode. Order information in server console.")
         
-        # Создаем сообщение
+        # Create message
         msg = MIMEMultipart()
         msg['From'] = settings.EMAIL_FROM
         msg['To'] = email
@@ -169,27 +169,27 @@ SneakerLab Team
         
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
         
-        # Отправляем письмо
-        print(f"[EMAIL] Попытка отправить письмо с подтверждением заказа на {email}...")
+        # Send email
+        print(f"[EMAIL] Attempting to send order confirmation email to {email}...")
         server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
         server.starttls()
-        print(f"[EMAIL] Подключение к {settings.SMTP_HOST}:{settings.SMTP_PORT}...")
+        print(f"[EMAIL] Connecting to {settings.SMTP_HOST}:{settings.SMTP_PORT}...")
         server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        print(f"[EMAIL] Авторизация успешна")
+        print(f"[EMAIL] Authentication successful")
         server.send_message(msg)
         server.quit()
-        print(f"[EMAIL] Письмо с подтверждением заказа успешно отправлено на {email}")
-        return (True, "Письмо отправлено успешно")
+        print(f"[EMAIL] Order confirmation email successfully sent to {email}")
+        return (True, "Email sent successfully")
     except smtplib.SMTPAuthenticationError as e:
-        error_msg = f"Ошибка авторизации SMTP: {str(e)}. Проверьте SMTP_USER и SMTP_PASSWORD в .env"
+        error_msg = f"SMTP authentication error: {str(e)}. Check SMTP_USER and SMTP_PASSWORD in .env"
         print(f"[EMAIL ERROR] {error_msg}")
         return (False, error_msg)
     except smtplib.SMTPException as e:
-        error_msg = f"Ошибка SMTP: {str(e)}"
+        error_msg = f"SMTP error: {str(e)}"
         print(f"[EMAIL ERROR] {error_msg}")
         return (False, error_msg)
     except Exception as e:
-        error_msg = f"Ошибка при отправке email: {str(e)}"
+        error_msg = f"Error sending email: {str(e)}"
         print(f"[EMAIL ERROR] {error_msg}")
         return (False, error_msg)
 

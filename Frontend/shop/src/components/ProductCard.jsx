@@ -28,10 +28,10 @@ function ProductCard({ product }) {
     }, [user, product.product_id, product.size]);
     
     const handleFavouriteClick = async (e) => {
-        e.stopPropagation(); // Предотвращаем переход на страницу товара
+        e.stopPropagation(); // Prevent navigation to product page
         
         if (!user || !user.user_id) {
-            alert("Войдите в аккаунт, чтобы добавлять товары в избранное");
+            alert("Please sign in to add items to favourites");
             return;
         }
         
@@ -44,8 +44,8 @@ function ProductCard({ product }) {
                 setIsFavourite(true);
             }
         } catch (error) {
-            console.error("Ошибка работы с избранным:", error);
-            alert("Ошибка: " + error.message);
+            console.error("Error working with favourites:", error);
+            alert("Error: " + error.message);
         }
     };
 

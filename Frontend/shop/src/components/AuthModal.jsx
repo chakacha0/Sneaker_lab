@@ -4,8 +4,7 @@ import { loginUser, registerUser } from "../api/users";
 
 function AuthModal({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("login"); // "login" или "register"
-  const [loginMethod, setLoginMethod] = useState("email"); // "email" или "phone"
+  const [activeTab, setActiveTab] = useState("login");
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -19,21 +18,53 @@ function AuthModal({ isOpen, onClose }) {
   });
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   if (!isOpen) return null;
 
   const handleLoginChange = (e) => {
     setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
+    // Clear error for this field when user starts typing
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: "" });
+    }
   };
 
   const handleRegisterChange = (e) => {
     setRegisterForm({ ...registerForm, [e.target.name]: e.target.value });
+    // Clear error for this field when user starts typing
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: "" });
+    }
+  };
+
+  const validateLoginForm = () => {
+    const errors = {};
+    
+    if (!loginForm.email || loginForm.email.trim() === "") {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginForm.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+    
+    if (!loginForm.password || loginForm.password.trim() === "") {
+      errors.password = "Password is required";
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setMessage("");
+    setFieldErrors({});
+
+    if (!validateLoginForm()) {
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const result = await loginUser({
@@ -41,11 +72,11 @@ function AuthModal({ isOpen, onClose }) {
         password: loginForm.password,
       });
       setMessage(result.message);
-      // Сохраняем пользователя
+      // Save user
       localStorage.setItem("user", JSON.stringify(result.user));
       setTimeout(() => {
         onClose();
-        window.location.reload(); // Обновляем страницу для отображения авторизованного состояния
+        window.location.reload(); // Reload page to show authenticated state
       }, 1000);
     } catch (error) {
       setMessage(error.message);
@@ -54,10 +85,35 @@ function AuthModal({ isOpen, onClose }) {
     }
   };
 
+  const validateRegisterForm = () => {
+    const errors = {};
+    
+    if (!registerForm.email || registerForm.email.trim() === "") {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerForm.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+    
+    if (!registerForm.password || registerForm.password.trim() === "") {
+      errors.password = "Password is required";
+    } else if (registerForm.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setMessage("");
+    setFieldErrors({});
+
+    if (!validateRegisterForm()) {
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const result = await registerUser(registerForm);
@@ -75,7 +131,7 @@ function AuthModal({ isOpen, onClose }) {
     }
   };
 
-  // Стили
+  // Styles in website theme
   const overlayStyle = {
     position: "fixed",
     top: 0,
@@ -84,7 +140,7 @@ function AuthModal({ isOpen, onClose }) {
     bottom: 0,
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -101,8 +157,10 @@ function AuthModal({ isOpen, onClose }) {
     maxHeight: "90vh",
     overflow: "auto",
     position: "relative",
-    fontFamily: "'Archivo Black', sans-serif",
+    fontFamily: "'Google Sans Flex', sans-serif",
     boxSizing: "border-box",
+    border: "1px solid #ddd",
+    boxShadow: "0 8px 30px rgba(255, 107, 53, 0.3)",
   };
 
   const headerStyle = {
@@ -110,126 +168,134 @@ function AuthModal({ isOpen, onClose }) {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "24px 32px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "2px solid #FF6B35",
+    background: "linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(255, 107, 53, 0.02) 100%)",
   };
 
   const logoStyle = {
     fontSize: "24px",
-    fontWeight: "bold",
-    color: "#000",
+    fontWeight: "700",
+    color: "#FF6B35",
     textTransform: "uppercase",
+    letterSpacing: "2px",
+    textShadow: "0 0 10px rgba(255, 107, 53, 0.5)",
+    fontFamily: "'Unbounded', sans-serif",
   };
 
   const closeButtonStyle = {
-    background: "none",
-    border: "none",
+    background: "transparent",
+    border: "2px solid #FF6B35",
+    borderRadius: "50%",
     fontSize: "24px",
     cursor: "pointer",
-    color: "#666",
+    color: "#FF6B35",
     padding: "0",
-    width: "32px",
-    height: "32px",
+    width: "36px",
+    height: "36px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    transition: "all 0.3s ease",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   const tabsStyle = {
     display: "flex",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid #ddd",
+    background: "#fafafa",
   };
 
   const tabStyle = {
     flex: 1,
-    padding: "16px",
+    padding: "16px 20px",
     textAlign: "center",
     cursor: "pointer",
     border: "none",
-    background: "none",
+    background: "transparent",
     fontSize: "16px",
-    color: "#999",
+    fontWeight: "600",
+    color: "#666",
     borderBottom: "2px solid transparent",
-    transition: "all 0.3s",
+    transition: "all 0.3s ease",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
   };
 
   const activeTabStyle = {
     ...tabStyle,
-    color: "#000",
-    borderBottom: "2px solid #0066FF",
+    color: "#FF6B35",
+    borderBottom: "2px solid #FF6B35",
+    background: "#fff",
   };
 
   const contentStyle = {
     padding: "32px",
   };
 
-  const methodSelectorStyle = {
-    display: "flex",
-    gap: "20px",
-    marginBottom: "24px",
-  };
-
-  const methodButtonStyle = {
-    background: "none",
-    border: "none",
-    fontSize: "14px",
-    color: "#999",
-    cursor: "pointer",
-    padding: "0",
-  };
-
-  const activeMethodStyle = {
-    ...methodButtonStyle,
-    color: "#333",
-    fontWeight: "600",
-  };
-
   const inputStyle = {
     width: "100%",
-    padding: "12px 16px",
+    padding: "14px 16px",
     fontSize: "15px",
-    border: "1px solid #ddd",
+    border: "2px solid #ddd",
     borderRadius: "8px",
     outline: "none",
     marginBottom: "16px",
     boxSizing: "border-box",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    transition: "all 0.3s ease",
   };
 
   const buttonStyle = {
     width: "100%",
-    padding: "14px",
+    padding: "14px 24px",
     fontSize: "16px",
-    fontWeight: "bold",
-    backgroundColor: "#0066FF",
+    fontWeight: "700",
+    backgroundColor: "#FF6B35",
     color: "#fff",
     border: "none",
     borderRadius: "8px",
     cursor: isLoading ? "not-allowed" : "pointer",
     opacity: isLoading ? 0.6 : 1,
-    transition: "background-color 0.3s",
+    transition: "all 0.3s ease",
     marginTop: "8px",
-  };
-
-  const linkStyle = {
-    color: "#FF0000",
-    textDecoration: "none",
-    fontSize: "14px",
-    display: "block",
-    textAlign: "center",
-    marginTop: "16px",
-    cursor: "pointer",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    boxShadow: "0 4px 15px rgba(255, 107, 53, 0.3)",
   };
 
   const messageStyle = {
     marginTop: "12px",
     fontSize: "14px",
-    color: message.includes("успешно") || message.includes("отправлен") ? "#28a745" : "#d00",
+    color: message.includes("successfully") || message.includes("sent") || message.includes("success") ? "#4CAF50" : "#FF6B35",
     textAlign: "center",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    fontWeight: "500",
+  };
+
+  const errorMessageStyle = {
+    fontSize: "12px",
+    color: "#FF6B35",
+    marginTop: "-12px",
+    marginBottom: "8px",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    fontWeight: "500",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  };
+
+  const errorIconStyle = {
+    fontSize: "14px",
+    color: "#FF6B35",
   };
 
   const legalTextStyle = {
     fontSize: "12px",
-    color: "#999",
+    color: "#666",
     marginTop: "8px",
+    fontFamily: "'Google Sans Flex', sans-serif",
   };
 
   return (
@@ -238,7 +304,22 @@ function AuthModal({ isOpen, onClose }) {
         {/* Header */}
         <div style={headerStyle}>
           <div style={logoStyle}>SNEAKER LAB</div>
-          <button style={closeButtonStyle} onClick={onClose}>
+          <button 
+            style={closeButtonStyle} 
+            onClick={onClose}
+            onMouseEnter={(e) => {
+              e.target.style.background = "#FF6B35";
+              e.target.style.color = "#fff";
+              e.target.style.transform = "rotate(90deg)";
+              e.target.style.boxShadow = "0 0 15px rgba(255, 107, 53, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "transparent";
+              e.target.style.color = "#FF6B35";
+              e.target.style.transform = "rotate(0deg)";
+              e.target.style.boxShadow = "none";
+            }}
+          >
             ×
           </button>
         </div>
@@ -250,136 +331,259 @@ function AuthModal({ isOpen, onClose }) {
             onClick={() => {
               setActiveTab("login");
               setMessage("");
+              setFieldErrors({});
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== "login") {
+                e.target.style.color = "#FF6B35";
+                e.target.style.background = "rgba(255, 107, 53, 0.05)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== "login") {
+                e.target.style.color = "#666";
+                e.target.style.background = "transparent";
+              }
             }}
           >
-            Вход
+            Sign In
           </button>
           <button
             style={activeTab === "register" ? activeTabStyle : tabStyle}
             onClick={() => {
               setActiveTab("register");
               setMessage("");
+              setFieldErrors({});
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== "register") {
+                e.target.style.color = "#FF6B35";
+                e.target.style.background = "rgba(255, 107, 53, 0.05)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== "register") {
+                e.target.style.color = "#666";
+                e.target.style.background = "transparent";
+              }
             }}
           >
-            Регистрация
+            Sign Up
           </button>
         </div>
 
         {/* Content */}
         <div style={contentStyle}>
           {activeTab === "login" ? (
-            <form onSubmit={handleLogin}>
-              {/* Method Selector */}
-              <div style={methodSelectorStyle}>
-                <button
-                  type="button"
-                  style={loginMethod === "phone" ? activeMethodStyle : methodButtonStyle}
-                  onClick={() => setLoginMethod("phone")}
-                >
-                  По номеру телефона
-                </button>
-                <button
-                  type="button"
-                  style={loginMethod === "email" ? activeMethodStyle : methodButtonStyle}
-                  onClick={() => setLoginMethod("email")}
-                >
-                  Через Email
-                </button>
+            <form onSubmit={handleLogin} noValidate>
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={loginForm.email}
+                  onChange={handleLoginChange}
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.email ? "#FF6B35" : "#ddd",
+                    marginBottom: fieldErrors.email ? "4px" : "16px",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#FF6B35";
+                    e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = fieldErrors.email ? "#FF6B35" : "#ddd";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                {fieldErrors.email && (
+                  <div style={errorMessageStyle}>
+                    <span style={errorIconStyle}>⚠</span>
+                    <span>{fieldErrors.email}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={loginForm.password}
+                  onChange={handleLoginChange}
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.password ? "#FF6B35" : "#ddd",
+                    marginBottom: fieldErrors.password ? "4px" : "16px",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#FF6B35";
+                    e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = fieldErrors.password ? "#FF6B35" : "#ddd";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                {fieldErrors.password && (
+                  <div style={errorMessageStyle}>
+                    <span style={errorIconStyle}>⚠</span>
+                    <span>{fieldErrors.password}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Input Fields */}
-              {loginMethod === "email" ? (
-                <>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={loginForm.email}
-                    onChange={handleLoginChange}
-                    required
-                    style={inputStyle}
-                  />
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="Пароль"
-                    value={loginForm.password}
-                    onChange={handleLoginChange}
-                    required
-                    style={inputStyle}
-                  />
-                </>
-              ) : (
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="+375 (00) 000 00 00"
-                  style={inputStyle}
-                />
-              )}
-
-              <button type="submit" style={buttonStyle} disabled={isLoading}>
-                {isLoading ? "Вход..." : loginMethod === "phone" ? "Получить код" : "Войти"}
+              <button 
+                type="submit" 
+                style={buttonStyle} 
+                disabled={isLoading}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.target.style.background = "#FF8C42";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading) {
+                    e.target.style.background = "#FF6B35";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+                  }
+                }}
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
               </button>
-
-              {loginMethod === "phone" && (
-                <a href="#" style={linkStyle} onClick={(e) => {
-                  e.preventDefault();
-                  setLoginMethod("email");
-                }}>
-                  Войти с помощью пароля
-                </a>
-              )}
             </form>
           ) : (
-            <form onSubmit={handleRegister}>
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={registerForm.email}
-                onChange={handleRegisterChange}
-                required
-                style={inputStyle}
-              />
-              <input
-                type="password"
-                name="password"
-                placeholder="Пароль"
-                value={registerForm.password}
-                onChange={handleRegisterChange}
-                required
-                style={inputStyle}
-              />
+            <form onSubmit={handleRegister} noValidate>
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={registerForm.email}
+                  onChange={handleRegisterChange}
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.email ? "#FF6B35" : "#ddd",
+                    marginBottom: fieldErrors.email ? "4px" : "16px",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#FF6B35";
+                    e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = fieldErrors.email ? "#FF6B35" : "#ddd";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                {fieldErrors.email && (
+                  <div style={errorMessageStyle}>
+                    <span style={errorIconStyle}>⚠</span>
+                    <span>{fieldErrors.email}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={registerForm.password}
+                  onChange={handleRegisterChange}
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.password ? "#FF6B35" : "#ddd",
+                    marginBottom: fieldErrors.password ? "4px" : "16px",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#FF6B35";
+                    e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = fieldErrors.password ? "#FF6B35" : "#ddd";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                {fieldErrors.password && (
+                  <div style={errorMessageStyle}>
+                    <span style={errorIconStyle}>⚠</span>
+                    <span>{fieldErrors.password}</span>
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 name="first_name"
-                placeholder="Имя"
+                placeholder="First Name"
                 value={registerForm.first_name}
                 onChange={handleRegisterChange}
                 style={inputStyle}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#FF6B35";
+                  e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#ddd";
+                  e.target.style.boxShadow = "none";
+                }}
               />
               <input
                 type="text"
                 name="last_name"
-                placeholder="Фамилия"
+                placeholder="Last Name"
                 value={registerForm.last_name}
                 onChange={handleRegisterChange}
                 style={inputStyle}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#FF6B35";
+                  e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#ddd";
+                  e.target.style.boxShadow = "none";
+                }}
               />
               <input
                 type="tel"
                 name="phone_number"
-                placeholder="Номер телефона"
+                placeholder="Phone Number (Optional)"
                 value={registerForm.phone_number}
                 onChange={handleRegisterChange}
                 style={inputStyle}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#FF6B35";
+                  e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.2)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#ddd";
+                  e.target.style.boxShadow = "none";
+                }}
               />
               <p style={legalTextStyle}>
-                <span style={{ color: "#FF0000" }}>*</span> Условия публичной оферты
+                By signing up, you agree to our Terms of Service and Privacy Policy
               </p>
-              <button type="submit" style={buttonStyle} disabled={isLoading}>
-                {isLoading ? "Регистрация..." : "Зарегистрироваться"}
+              <button 
+                type="submit" 
+                style={buttonStyle} 
+                disabled={isLoading}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.target.style.background = "#FF8C42";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading) {
+                    e.target.style.background = "#FF6B35";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+                  }
+                }}
+              >
+                {isLoading ? "Registering..." : "Sign Up"}
               </button>
             </form>
           )}

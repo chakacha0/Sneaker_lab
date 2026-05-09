@@ -122,11 +122,11 @@ function Home() {
       {/* Баннер с новогодним поздравлением */}
       <div style={bannerContainerStyle}>
         <img 
-          src="/Sneaker_Christmas_Market_Banner.png" 
+          src="/bannner.png" 
           alt="Christmas Market Banner" 
           style={bannerImageStyle}
         />
-        <div style={bannerTextStyle}>Happy New Year</div>
+        <div style={bannerTextStyle}>Best Sneakers for You</div>
       </div>
 
       {/* Секция брендов */}

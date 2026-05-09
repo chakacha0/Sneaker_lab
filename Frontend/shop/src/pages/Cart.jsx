@@ -99,8 +99,13 @@ function Cart() {
           isOpen={isAuthModalOpen}
           onClose={() => {
             setIsAuthModalOpen(false);
-            if (localStorage.getItem("user")) {
+            // Если пользователь авторизовался, загружаем корзину
+            const updatedUser = JSON.parse(localStorage.getItem("user") || "null");
+            if (updatedUser && updatedUser.user_id) {
               loadCart();
+            } else {
+              // Если пользователь не авторизовался, возвращаемся на предыдущую страницу
+              navigate(-1);
             }
           }}
         />
@@ -326,8 +331,13 @@ function Cart() {
         isOpen={isAuthModalOpen}
         onClose={() => {
           setIsAuthModalOpen(false);
-          if (localStorage.getItem("user")) {
+          // Если пользователь авторизовался, загружаем корзину
+          const updatedUser = JSON.parse(localStorage.getItem("user") || "null");
+          if (updatedUser && updatedUser.user_id) {
             loadCart();
+          } else {
+            // Если пользователь не авторизовался, возвращаемся на предыдущую страницу
+            navigate(-1);
           }
         }}
       />

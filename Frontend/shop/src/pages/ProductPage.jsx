@@ -75,15 +75,22 @@ export default function ProductPage() {
   }, [id]);
 
   const handleAddToCart = async () => {
-    if (selectedSize === null) {
-      setMessage("Please select a size");
+    // Проверяем авторизацию в первую очередь
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (!user) {
+      setMessage("Please log in or sign up");
       return;
     }
 
-    // Проверяем авторизацию
-    const user = JSON.parse(localStorage.getItem("user") || "null");
-    if (!user) {
-      setMessage("Please log in to add items to cart");
+    // Затем проверяем выбранный размер
+    if (selectedSize === null) {
+      // Проверяем, есть ли доступные размеры
+      const hasAvailableSizes = sizes.some(s => s.quantity > 0);
+      if (!hasAvailableSizes) {
+        setMessage("There are no sizes available, may become available later.");
+      } else {
+        setMessage("Select a size");
+      }
       return;
     }
 

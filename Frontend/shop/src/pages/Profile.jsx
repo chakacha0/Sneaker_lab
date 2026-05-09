@@ -779,7 +779,7 @@ function Profile() {
                                     e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
                                   }}
                                 >
-                                  {hasReview ? "✓ Отзыв оставлен" : "Написать отзыв"}
+                                  {hasReview ? "✓ Review submitted" : "Write a review"}
                                 </button>
                               </div>
                             </div>
@@ -791,23 +791,6 @@ function Profile() {
                           </div>
                         )}
                       </div>
-
-                      {/* Промокод если использован */}
-                      {order.promo_code && (
-                        <div
-                          style={{
-                            marginTop: "15px",
-                            padding: "10px 15px",
-                            background: "rgba(255, 107, 53, 0.1)",
-                            borderRadius: "8px",
-                            fontSize: "14px",
-                            color: "#FF6B35",
-                            fontFamily: "'Fragment Mono', monospace",
-                          }}
-                        >
-                          Promo Code: {order.promo_code}
-                        </div>
-                      )}
                     </div>
                   );
                 })}

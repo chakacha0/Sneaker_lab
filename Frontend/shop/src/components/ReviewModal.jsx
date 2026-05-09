@@ -14,7 +14,7 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
     e.preventDefault();
     
     if (rating === 0) {
-      setMessage("Пожалуйста, выберите оценку");
+      setMessage("Please select a rating");
       return;
     }
 
@@ -30,7 +30,7 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
         order_item_id: orderItemId || null,
       });
       
-      setMessage("Отзыв успешно отправлен!");
+      setMessage("Review successfully submitted!");
       setRating(0);
       setText("");
       
@@ -41,7 +41,7 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
         }
       }, 1000);
     } catch (error) {
-      setMessage(error.message || "Ошибка при отправке отзыва");
+      setMessage(error.message || "Error submitting review");
     } finally {
       setIsLoading(false);
     }
@@ -202,18 +202,18 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
           ×
         </button>
 
-        <h2 style={titleStyle}>Написать отзыв</h2>
+        <h2 style={titleStyle}>Write a review</h2>
 
         {productName && (
           <div style={{ marginBottom: "20px", color: "#666", fontSize: "14px" }}>
-            Товар: <strong>{productName}</strong>
+            Product: <strong>{productName}</strong>
           </div>
         )}
 
         {message && (
           <div
             style={
-              message.includes("успешно") ? messageSuccessStyle : messageErrorStyle
+              message.includes("successfully") ? messageSuccessStyle : messageErrorStyle
             }
           >
             {message}
@@ -221,7 +221,7 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
         )}
 
         <form onSubmit={handleSubmit}>
-          <label style={labelStyle}>Оценка *</label>
+          <label style={labelStyle}>Rating *</label>
           <div style={starsContainerStyle}>
             {[1, 2, 3, 4, 5].map((star) => (
               <span
@@ -236,16 +236,16 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
             ))}
             {rating > 0 && (
               <span style={{ marginLeft: "10px", color: "#666", fontSize: "14px" }}>
-                {rating} {rating === 1 ? "звезда" : rating < 5 ? "звезды" : "звёзд"}
+                {rating} {rating === 1 ? "star" : rating < 5 ? "stars" : "stars"}
               </span>
             )}
           </div>
 
-          <label style={labelStyle}>Текст отзыва</label>
+          <label style={labelStyle}>Review text</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Расскажите о вашем опыте использования товара..."
+            placeholder="Tell us about your experience using the product..."
             style={textareaStyle}
             disabled={isLoading}
           />
@@ -269,7 +269,7 @@ function ReviewModal({ isOpen, onClose, productId, productName, userId, orderIte
               }
             }}
           >
-            {isLoading ? "Отправка..." : "Отправить отзыв"}
+            {isLoading ? "Sending..." : "Submit review"}
           </button>
         </form>
       </div>
