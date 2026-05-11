@@ -1,0 +1,9 @@
+.git/
+.cursor/
+**/__pycache__/
+**/*.py[cod]
+**/node_modules/
+**/dist/
+**/.env
+**/.env.*
+*.log

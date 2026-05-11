@@ -36,9 +36,9 @@ const headerStyle = {
   alignItems: "center",
   padding: "20px 40px",
   paddingBottom: "20px",
-  background: "#fff",
-  color: "#333",
-  boxShadow: "0 4px 20px rgba(255, 107, 53, 0.2)",
+  background: "linear-gradient(120deg, #FFF4B8 0%, #FFD6E8 34%, #C8F7DC 68%, #BDEBFF 100%)",
+  color: "#234033",
+  boxShadow: "0 8px 28px rgba(109, 190, 143, 0.28)",
   position: "sticky",
   top: 0,
   zIndex: 1000,
@@ -52,11 +52,11 @@ const headerStyle = {
 const logoStyle = {
   fontFamily: "'Unbounded', sans-serif",
   fontSize: "32px",
-  fontWeight: "700",
+  fontWeight: "900",
   textTransform: "uppercase",
   textDecoration: "none",
-  color: "#FF6B35",
-  textShadow: "0 0 10px rgba(255, 107, 53, 0.5)",
+  color: "#1F6F4A",
+  textShadow: "0 2px 12px rgba(255, 255, 255, 0.85)",
   letterSpacing: "2px",
   transition: "all 0.3s ease",
 };
@@ -85,10 +85,11 @@ const searchInputStyle = {
   border: "1px solid #ddd",
   borderRadius: "25px",
   outline: "none",
-  background: "#f5f5f5",
-  color: "#333",
+  background: "rgba(255, 255, 255, 0.82)",
+  color: "#234033",
   transition: "all 0.3s ease",
   fontFamily: "'Google Sans Flex', sans-serif",
+  boxShadow: "0 4px 16px rgba(255, 255, 255, 0.35)",
 };
 
 const searchButtonStyle = {
@@ -105,14 +106,14 @@ const searchButtonStyle = {
   justifyContent: "center",
   cursor: "pointer",
   transition: "all 0.3s ease",
-  color: "#FF6B35",
+  color: "#1F8A5B",
   zIndex: 10,
   padding: 0,
 };
 
 const linkStyle = {
   fontFamily: "'Google Sans Flex', sans-serif",
-  color: "#333",
+  color: "#234033",
   textDecoration: "none",
   transition: "all 0.3s ease",
   position: "relative",
@@ -145,8 +146,8 @@ const linkStyle = {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={searchInputStyle}
             onFocus={(e) => {
-              e.target.style.borderColor = "#FF6B35";
-              e.target.style.boxShadow = "0 0 10px rgba(255, 107, 53, 0.3)";
+              e.target.style.borderColor = "#64C98B";
+              e.target.style.boxShadow = "0 0 14px rgba(100, 201, 139, 0.35)";
             }}
             onBlur={(e) => {
               e.target.style.borderColor = "#ddd";
@@ -157,11 +158,11 @@ const linkStyle = {
             type="submit"
             style={searchButtonStyle}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#FF8C42";
+              e.currentTarget.style.color = "#E85DA5";
               e.currentTarget.style.transform = "translateY(-50%) scale(1.1)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#FF6B35";
+              e.currentTarget.style.color = "#1F8A5B";
               e.currentTarget.style.transform = "translateY(-50%) scale(1)";
             }}
           >
@@ -197,8 +198,8 @@ const linkStyle = {
             to="/"
             style={linkStyle}
             onMouseEnter={(e) => {
-              e.target.style.color = "#FF6B35";
-              e.target.style.textShadow = "0 0 8px rgba(255, 107, 53, 0.6)";
+              e.target.style.color = "#E85DA5";
+              e.target.style.textShadow = "0 0 10px rgba(255, 255, 255, 0.9)";
             }}
             onMouseLeave={(e) => {
               e.target.style.color = linkStyle.color;
@@ -211,8 +212,8 @@ const linkStyle = {
             to="/catalog"
             style={linkStyle}
             onMouseEnter={(e) => {
-              e.target.style.color = "#FF6B35";
-              e.target.style.textShadow = "0 0 8px rgba(255, 107, 53, 0.6)";
+              e.target.style.color = "#E85DA5";
+              e.target.style.textShadow = "0 0 10px rgba(255, 255, 255, 0.9)";
             }}
             onMouseLeave={(e) => {
               e.target.style.color = linkStyle.color;
@@ -225,8 +226,8 @@ const linkStyle = {
             to="/info"
             style={linkStyle}
             onMouseEnter={(e) => {
-              e.target.style.color = "#FF6B35";
-              e.target.style.textShadow = "0 0 8px rgba(255, 107, 53, 0.6)";
+              e.target.style.color = "#E85DA5";
+              e.target.style.textShadow = "0 0 10px rgba(255, 255, 255, 0.9)";
             }}
             onMouseLeave={(e) => {
               e.target.style.color = linkStyle.color;
@@ -253,18 +254,18 @@ const linkStyle = {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#333",
+            color: "#234033",
             fontSize: "24px",
             transition: "all 0.3s ease",
             borderRadius: "50%",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#FF6B35";
+            e.currentTarget.style.color = "#E85DA5";
             e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#333";
+            e.currentTarget.style.color = "#234033";
             e.currentTarget.style.transform = "scale(1)";
             e.currentTarget.style.background = "transparent";
           }}
@@ -299,16 +300,16 @@ const linkStyle = {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#333",
+            color: "#234033",
             fontSize: "24px",
             transition: "all 0.3s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#FF6B35";
+            e.currentTarget.style.color = "#E85DA5";
             e.currentTarget.style.transform = "scale(1.1)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#333";
+            e.currentTarget.style.color = "#234033";
             e.currentTarget.style.transform = "scale(1)";
           }}
         >
@@ -346,18 +347,18 @@ const linkStyle = {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#333",
+              color: "#234033",
               fontSize: "24px",
               transition: "all 0.3s ease",
               borderRadius: "50%",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#FF6B35";
+              e.currentTarget.style.color = "#E85DA5";
               e.currentTarget.style.transform = "scale(1.1)";
-              e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#333";
+              e.currentTarget.style.color = "#234033";
               e.currentTarget.style.transform = "scale(1)";
               e.currentTarget.style.background = "transparent";
             }}
@@ -386,7 +387,7 @@ const linkStyle = {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#333",
+              color: "#234033",
               fontSize: "14px",
               fontWeight: "600",
               transition: "all 0.3s ease",
@@ -396,12 +397,12 @@ const linkStyle = {
               letterSpacing: "0.5px",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#FF6B35";
+              e.currentTarget.style.color = "#E85DA5";
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.45)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#333";
+              e.currentTarget.style.color = "#234033";
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.background = "transparent";
             }}

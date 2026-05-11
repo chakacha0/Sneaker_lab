@@ -1,0 +1,122 @@
+# Production HTTPS template for SneakerLab frontend.
+# Replace example.com, www.example.com, and 203.0.113.10 with your domain/IP.
+# If you do not want IP-based access, remove 203.0.113.10 from server_name.
+
+server {
+  listen 80;
+  listen [::]:80;
+  server_name example.com www.example.com 203.0.113.10;
+
+  # Redirect all HTTP traffic to HTTPS.
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name example.com www.example.com 203.0.113.10;
+
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # TLS certificates.
+  # Example for Let's Encrypt:
+  ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+  ssl_trusted_certificate /etc/letsencrypt/live/example.com/chain.pem;
+
+  # TLS grade A-friendly settings.
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+  ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+  ssl_ecdh_curve X25519:prime256v1:secp384r1;
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 1d;
+  ssl_session_tickets off;
+
+  # OCSP stapling.
+  ssl_stapling on;
+  ssl_stapling_verify on;
+  resolver 1.1.1.1 8.8.8.8 valid=300s;
+  resolver_timeout 5s;
+
+  # Security headers.
+  add_header X-Frame-Options "SAMEORIGIN" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+  # Enable HSTS only after HTTPS works correctly for the real domain.
+  # This helps with SSL Labs A/A+ grades, but can lock browsers to HTTPS.
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+  # Vite/React SPA routing.
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Static asset cache.
+  location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)$ {
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    try_files $uri =404;
+  }
+
+  # Optional backend proxy if you later move frontend API calls to relative /api paths.
+  # location /api/ {
+  #   proxy_pass http://backend:8000/;
+  #   proxy_http_version 1.1;
+  #   proxy_set_header Host $host;
+  #   proxy_set_header X-Real-IP $remote_addr;
+  #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  #   proxy_set_header X-Forwarded-Proto https;
+  # }
+}
+# Replace these placeholders:
+# - your-domain.com / www.your-domain.com: your real domain names
+# - 203.0.113.10: optional server IP. Remove it from server_name if you do not need direct IP access.
+# - Certificate paths: update after issuing SSL certificates, for example with Certbot.
+
+server {
+  listen 80;
+  listen [::]:80;
+
+  server_name your-domain.com www.your-domain.com 203.0.113.10;
+
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+
+  server_name your-domain.com www.your-domain.com 203.0.113.10;
+
+  ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+
+  # Frontend SPA
+  location / {
+    proxy_pass http://frontend:80;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Optional backend proxy if you later expose API through the same domain.
+  # The current frontend code calls http://localhost:8000 directly in several places,
+  # so this block is a deployment template and may require frontend API URL changes.
+  location /api/ {
+    proxy_pass http://backend:8000/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}

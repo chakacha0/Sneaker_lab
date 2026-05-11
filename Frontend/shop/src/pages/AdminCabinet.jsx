@@ -753,11 +753,11 @@ function AdminCabinet() {
       // Обновляем список остатков
       const response = await fetchProductSizes(selectedProduct.product_id);
       setProductStock(response.sizes || []);
+      await loadProducts();
       
-      // Очищаем форму и закрываем модальное окно
+      // Очищаем форму, но оставляем окно открытым, чтобы можно было добавить еще размеры.
       setNewStock({ size: "", quantity: "" });
       setTimeout(() => {
-        setIsAddStockModalOpen(false);
         setMessage("");
       }, 1500);
     } catch (error) {

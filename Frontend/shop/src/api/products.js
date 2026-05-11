@@ -25,6 +25,9 @@ export async function fetchProducts(filters = {}) {
   if (filters.inStock !== undefined && filters.inStock !== null) {
     params.append('in_stock', filters.inStock.toString());
   }
+  if (filters.ids && filters.ids.length > 0) {
+    params.append('ids', filters.ids.join(','));
+  }
   if (filters.sortBy) {
     params.append('sort_by', filters.sortBy);
   }
@@ -40,6 +43,32 @@ export async function fetchProducts(filters = {}) {
     const error = await response.json();
     throw new Error(error.detail || "Ошибка загрузки товаров");
   }
+  return response.json();
+}
+
+export async function fetchAiProductRecommendations(query, previousQuery = "") {
+  const response = await fetch("http://localhost:8000/products/ai-recommendations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query,
+      previous_query: previousQuery,
+    }),
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Ошибка AI-подбора товаров";
+    try {
+      const error = await response.json();
+      errorMessage = error.detail || error.message || errorMessage;
+    } catch (e) {
+      errorMessage = `Ошибка ${response.status}: ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
+
   return response.json();
 }
 

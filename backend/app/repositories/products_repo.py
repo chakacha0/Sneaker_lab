@@ -31,13 +31,21 @@ def get_all_products():
             p.description,
             p.price,
             p.gender,
+            p.brand_id,
+            p.category_id,
             b.name AS brand,
             c.name AS category,
-            i.image_url
+            (SELECT image_url FROM product_images WHERE product_id = p.product_id LIMIT 1) AS image_url,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM product_stock ps2 
+                    WHERE ps2.product_id = p.product_id AND ps2.quantity > 0
+                ) THEN true
+                ELSE false
+            END AS has_stock
         FROM products p
         LEFT JOIN brands b ON p.brand_id = b.brand_id
         LEFT JOIN categories c ON p.category_id = c.category_id
-        LEFT JOIN product_images as i using (product_id)
         ORDER BY p.created_at DESC;
     """
     )
@@ -55,6 +63,7 @@ def get_filtered_products(
     sizes=None,
     gender=None,
     in_stock=None,
+    product_ids=None,
     sort_by="created_at",
     sort_order="DESC"
 ):
@@ -68,12 +77,16 @@ def get_filtered_products(
         brand_id: ID бренда
         sizes: Список размеров (список целых чисел)
         gender: Пол ('male', 'female', 'unisex')
+        product_ids: Список ID товаров для ограничения результата
         sort_by: Поле для сортировки ('price', 'created_at', 'name')
         sort_order: Порядок сортировки ('ASC', 'DESC')
     
     Returns:
         list of dicts с информацией о товарах
     """
+    if product_ids is not None and len(product_ids) == 0:
+        return []
+    
     conn = get_connection()
     cur = conn.cursor()
     
@@ -141,6 +154,12 @@ def get_filtered_products(
     if gender is not None:
         conditions.append("(p.gender = %s OR p.gender = 'unisex')")
         params.append(gender)
+    
+    # Ограничение списком товаров (например, результат AI-подбора)
+    if product_ids is not None:
+        placeholders = ','.join(['%s'] * len(product_ids))
+        conditions.append(f"p.product_id IN ({placeholders})")
+        params.extend(product_ids)
     
     # Фильтр по размерам (через product_stock)
     if needs_size_join:
@@ -409,7 +428,7 @@ def has_stock(product_id: int):
             """
             SELECT COUNT(*) as count
             FROM product_stock
-            WHERE product_id = %s;
+            WHERE product_id = %s AND quantity > 0;
             """,
             (product_id,)
         )

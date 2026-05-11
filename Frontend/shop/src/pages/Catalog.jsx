@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import { fetchProducts, fetchPriceRange, fetchAvailableSizes, searchProducts } from "../api/products";
+import { fetchProducts, fetchPriceRange, fetchAvailableSizes, searchProducts, fetchAiProductRecommendations } from "../api/products";
 import { fetchBrands } from "../api/brands";
 import { fetchCategories } from "../api/categories";
+
+const AI_QUERY_STORAGE_KEY = "sneakerlab_ai_query";
 
 function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,11 +15,18 @@ function Catalog() {
   const [sizes, setSizes] = useState([]);
   const [priceRange, setPriceRange] = useState({ min_price: 0, max_price: 1000 });
   const [loading, setLoading] = useState(true);
+  const [aiQuery, setAiQuery] = useState(() => localStorage.getItem(AI_QUERY_STORAGE_KEY) || "");
+  const [aiLastSubmittedQuery, setAiLastSubmittedQuery] = useState(() => localStorage.getItem(AI_QUERY_STORAGE_KEY) || "");
+  const [aiProductIds, setAiProductIds] = useState([]);
+  const [aiModeActive, setAiModeActive] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   // Получаем параметры из URL
   const brandIdFromUrl = searchParams.get("brandId");
   const searchQueryFromUrl = searchParams.get("search");
   const genderFromUrl = searchParams.get("gender");
+  const aiQueryFromUrl = searchParams.get("ai");
 
   // Фильтры
   const [filters, setFilters] = useState({
@@ -65,6 +74,13 @@ function Catalog() {
     }));
   }, [searchParams]);
 
+  useEffect(() => {
+    if (!aiQueryFromUrl) return;
+    setAiQuery(aiQueryFromUrl);
+    setAiLastSubmittedQuery(aiQueryFromUrl);
+    localStorage.setItem(AI_QUERY_STORAGE_KEY, aiQueryFromUrl);
+  }, [aiQueryFromUrl]);
+
   // Загружаем данные для фильтров
   useEffect(() => {
     async function loadFilterData() {
@@ -102,8 +118,21 @@ function Catalog() {
     async function loadProducts() {
       setLoading(true);
       try {
+        if (aiModeActive) {
+          if (aiProductIds.length === 0) {
+            setProducts([]);
+          } else {
+            const cleanFilters = {
+              ...filters,
+              ids: aiProductIds,
+              minPrice: filters.minPrice !== undefined && filters.minPrice !== null ? filters.minPrice : undefined,
+              maxPrice: filters.maxPrice !== undefined && filters.maxPrice !== null ? filters.maxPrice : undefined,
+            };
+            const productsData = await fetchProducts(cleanFilters);
+            setProducts(Array.isArray(productsData) ? productsData : []);
+          }
         // Если есть поисковый запрос, используем поиск, но все равно применяем фильтры
-        if (searchQueryFromUrl && searchQueryFromUrl.trim()) {
+        } else if (searchQueryFromUrl && searchQueryFromUrl.trim()) {
           const searchResults = await searchProducts(searchQueryFromUrl.trim());
           let filteredResults = Array.isArray(searchResults) ? searchResults : [];
           
@@ -164,7 +193,7 @@ function Catalog() {
       }
     }
     loadProducts();
-  }, [filters, filtersInitialized, searchQueryFromUrl]);
+  }, [filters, filtersInitialized, searchQueryFromUrl, aiModeActive, aiProductIds]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -204,6 +233,44 @@ function Catalog() {
     setSearchParams({});
   };
 
+  const handleAiQueryChange = (value) => {
+    setAiQuery(value);
+    localStorage.setItem(AI_QUERY_STORAGE_KEY, value);
+  };
+
+  const handleAiSearch = async (e) => {
+    e.preventDefault();
+    const trimmedQuery = aiQuery.trim();
+    if (!trimmedQuery) {
+      setAiError("Describe what sneakers you are looking for.");
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError("");
+    try {
+      const data = await fetchAiProductRecommendations(trimmedQuery, aiLastSubmittedQuery);
+      const ids = Array.isArray(data.product_ids) ? data.product_ids : [];
+      localStorage.setItem(AI_QUERY_STORAGE_KEY, trimmedQuery);
+      setAiLastSubmittedQuery(trimmedQuery);
+      setAiProductIds(ids);
+      setAiModeActive(true);
+      if (Array.isArray(data.products)) {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      setAiError(error.message || "AI assistant failed. Try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleShowFullCatalog = () => {
+    setAiModeActive(false);
+    setAiProductIds([]);
+    setAiError("");
+  };
+
   const containerStyle = {
     maxWidth: "1600px",
     margin: "0 auto",
@@ -213,6 +280,40 @@ function Catalog() {
   const filtersContainerStyle = {
     marginBottom: "30px",
     padding: "10px 0",
+  };
+
+  const aiAssistantStyle = {
+    marginBottom: "22px",
+    padding: "20px",
+    borderRadius: "22px",
+    border: "1px solid rgba(255, 255, 255, 0.78)",
+    background:
+      "radial-gradient(circle at 8% 20%, rgba(255, 255, 255, 0.7) 0, transparent 26%), linear-gradient(135deg, #FFF4B8 0%, #FFD6E8 36%, #C8F7DC 70%, #BDEBFF 100%)",
+    boxShadow: "0 14px 38px rgba(109, 190, 143, 0.24)",
+    position: "relative",
+    overflow: "hidden",
+  };
+
+  const aiFormStyle = {
+    display: "flex",
+    gap: "10px",
+    alignItems: "stretch",
+    flexWrap: "wrap",
+    position: "relative",
+    zIndex: 2,
+  };
+
+  const aiInputStyle = {
+    flex: "1 1 360px",
+    padding: "13px 16px",
+    fontSize: "14px",
+    border: "1px solid rgba(31, 111, 74, 0.22)",
+    borderRadius: "14px",
+    outline: "none",
+    background: "rgba(255, 255, 255, 0.86)",
+    color: "#234033",
+    fontFamily: "'Google Sans Flex', sans-serif",
+    boxShadow: "0 8px 22px rgba(255, 255, 255, 0.32)",
   };
 
   const filtersRowStyle = {
@@ -286,6 +387,26 @@ function Catalog() {
     flexShrink: 0,
   };
 
+  const aiPrimaryButtonStyle = {
+    ...buttonStyle,
+    minHeight: "44px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #1F8A5B 0%, #E85DA5 100%)",
+    boxShadow: "0 8px 20px rgba(232, 93, 165, 0.26)",
+    opacity: aiLoading ? 0.6 : 1,
+    cursor: aiLoading ? "not-allowed" : "pointer",
+  };
+
+  const aiSecondaryButtonStyle = {
+    ...buttonStyle,
+    minHeight: "44px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    background: "rgba(35, 64, 51, 0.9)",
+    boxShadow: "0 8px 18px rgba(35, 64, 51, 0.18)",
+  };
+
   const gridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
@@ -308,6 +429,106 @@ function Catalog() {
           Search results for: "{searchQueryFromUrl}"
         </div>
       )}
+
+      <div style={aiAssistantStyle}>
+        <div
+          style={{
+            position: "absolute",
+            right: "-44px",
+            top: "-52px",
+            width: "150px",
+            height: "150px",
+            borderRadius: "50%",
+            background: "rgba(255, 255, 255, 0.35)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: "-38px",
+            bottom: "-48px",
+            width: "130px",
+            height: "130px",
+            borderRadius: "50%",
+            background: "rgba(232, 93, 165, 0.13)",
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            marginBottom: "12px",
+            fontSize: "18px",
+            fontWeight: "800",
+            color: "#1F6F4A",
+            fontFamily: "'Unbounded', sans-serif",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            textShadow: "0 2px 10px rgba(255, 255, 255, 0.8)",
+          }}
+        >
+          AI Sneaker Helper
+          <span
+            style={{
+              display: "block",
+              marginTop: "6px",
+              fontSize: "13px",
+              fontWeight: "600",
+              color: "#234033",
+              fontFamily: "'Google Sans Flex', sans-serif",
+              textTransform: "none",
+              letterSpacing: 0,
+            }}
+          >
+            Tell it the vibe, budget, color or comfort you want.
+          </span>
+        </div>
+        <form onSubmit={handleAiSearch} style={aiFormStyle}>
+          <input
+            type="text"
+            value={aiQuery}
+            onChange={(e) => handleAiQueryChange(e.target.value)}
+            placeholder="Describe what sneakers you need, for example: black everyday sneakers under 150"
+            style={aiInputStyle}
+          />
+          <button
+            type="submit"
+            disabled={aiLoading}
+            style={aiPrimaryButtonStyle}
+            onMouseEnter={(e) => {
+              if (!aiLoading) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 12px 26px rgba(232, 93, 165, 0.36)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(232, 93, 165, 0.26)";
+            }}
+          >
+            {aiLoading ? "Searching..." : "Ask AI"}
+          </button>
+          {aiModeActive && (
+            <button
+              type="button"
+              onClick={handleShowFullCatalog}
+              style={aiSecondaryButtonStyle}
+            >
+              Show full catalog
+            </button>
+          )}
+        </form>
+        {aiModeActive && (
+          <div style={{ position: "relative", zIndex: 2, marginTop: "12px", color: "#1F6F4A", fontSize: "14px", fontWeight: "700", fontFamily: "'Google Sans Flex', sans-serif" }}>
+            AI selected {aiProductIds.length} product{aiProductIds.length === 1 ? "" : "s"}. You can still use filters and sorting below.
+          </div>
+        )}
+        {aiError && (
+          <div style={{ position: "relative", zIndex: 2, marginTop: "12px", color: "#b3261e", fontSize: "14px", fontWeight: "600", fontFamily: "'Google Sans Flex', sans-serif" }}>
+            {aiError}
+          </div>
+        )}
+      </div>
       
       {/* Фильтры (всегда показываем) */}
       <div style={filtersContainerStyle}>

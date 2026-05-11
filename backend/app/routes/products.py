@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query, UploadFile, File, Form, HTTPException, Body
 from pydantic import BaseModel
+from app.config import settings
 from app.repositories.products_repo import (
     get_all_products,
     get_product_by_id,
@@ -14,8 +15,11 @@ from app.repositories.products_repo import (
 )
 from app.repositories.product_stock_repo import get_product_sizes, add_or_update_product_stock
 from typing import List, Optional
+import json
 import os
 import shutil
+import urllib.error
+import urllib.request
 
 router = APIRouter(prefix="/products")
 
@@ -46,6 +50,7 @@ def list_products(
     sizes: Optional[str] = None,  # Строка с размерами через запятую: "36,37,38"
     gender: Optional[str] = None,
     in_stock: Optional[bool] = Query(None, description="Filter by stock availability (true = in stock, false = out of stock)"),
+    ids: Optional[str] = Query(None, description="Comma-separated product IDs to limit catalog results"),
     sort_by: str = "created_at",
     sort_order: str = "DESC"
 ):
@@ -60,6 +65,7 @@ def list_products(
     - sizes: размеры через запятую (например: "36,37,38")
     - gender: пол ('male', 'female', 'unisex')
     - in_stock: фильтр по наличию (true = в наличии, false = нет в наличии)
+    - ids: список ID товаров через запятую
     - sort_by: поле сортировки ('price', 'created_at', 'name')
     - sort_order: порядок сортировки ('ASC', 'DESC')
     """
@@ -79,6 +85,13 @@ def list_products(
             print(f"Ошибка преобразования размеров: {e}")
             sizes_list = None
     
+    product_ids = None
+    if ids is not None:
+        try:
+            product_ids = [int(pid.strip()) for pid in ids.split(",") if pid.strip()]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Некорректный список ID товаров")
+    
     try:
         products = get_filtered_products(
             min_price=min_price,
@@ -88,6 +101,7 @@ def list_products(
             sizes=sizes_list,
             gender=gender,
             in_stock=in_stock,
+            product_ids=product_ids,
             sort_by=sort_by,
             sort_order=sort_order
         )
@@ -112,6 +126,177 @@ def get_available_sizes_endpoint():
     Получает список всех доступных размеров
     """
     return get_available_sizes()
+
+
+class AiRecommendationsRequest(BaseModel):
+    query: str
+    previous_query: Optional[str] = None
+
+
+def _product_for_ai(product):
+    return {
+        "product_id": product.get("product_id"),
+        "name": product.get("name"),
+        "description": product.get("description"),
+        "price": float(product.get("price")) if product.get("price") is not None else None,
+        "brand": product.get("brand"),
+        "category": product.get("category"),
+        "gender": product.get("gender"),
+        "has_stock": product.get("has_stock"),
+    }
+
+
+def _extract_product_ids(content: str):
+    text = (content or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`").strip()
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return []
+        parsed = json.loads(text[start:end + 1])
+
+    ids = parsed.get("product_ids", []) if isinstance(parsed, dict) else []
+    result = []
+    for value in ids:
+        try:
+            result.append(int(value))
+        except (TypeError, ValueError):
+            continue
+    return result
+
+
+def _log_openrouter(title: str, data):
+    print(f"\n[OpenRouter] {title}")
+    try:
+        print(json.dumps(data, ensure_ascii=False, indent=2, default=str))
+    except Exception:
+        print(data)
+    print(f"[OpenRouter] End {title}\n")
+
+
+@router.post("/ai-recommendations")
+def get_ai_product_recommendations(data: AiRecommendationsRequest):
+    """
+    Подбирает товары по одному текстовому запросу через OpenRouter.
+    Возвращает product_ids и товары в стандартном формате каталога.
+    """
+    query = (data.query or "").strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Query is required")
+    if not settings.OPENROUTER_API_KEY:
+        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY is not configured")
+
+    catalog = get_all_products()
+    if not catalog:
+        return {"query": query, "product_ids": [], "products": []}
+
+    catalog_for_ai = [_product_for_ai(product) for product in catalog]
+    existing_ids = {product["product_id"] for product in catalog_for_ai if product.get("product_id") is not None}
+    prompt_query = query
+    if data.previous_query and data.previous_query.strip() and data.previous_query.strip() != query:
+        prompt_query = f"Previous request: {data.previous_query.strip()}\nUpdated request: {query}"
+
+    payload = {
+        "model": settings.OPENROUTER_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are a sneaker shop assistant. Choose the best matching products from the provided catalog. "
+                    "Return ONLY valid JSON in this exact shape: {\"product_ids\":[1,2,3]}. "
+                    "Use only product_id values that exist in the catalog. Prefer in-stock products when possible. "
+                    "If nothing matches, return {\"product_ids\":[]}."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "request": prompt_query,
+                        "catalog": catalog_for_ai,
+                    },
+                    ensure_ascii=False,
+                ),
+            },
+        ],
+        "temperature": 0.2,
+        "max_tokens": 300,
+    }
+
+    _log_openrouter(
+        "Request",
+        {
+            "url": settings.OPENROUTER_API_URL,
+            "headers": {
+                "Authorization": "Bearer ***",
+                "Content-Type": "application/json",
+                "HTTP-Referer": settings.FRONTEND_URL,
+                "X-Title": "SneakerLab",
+            },
+            "payload": payload,
+            "catalog_count": len(catalog_for_ai),
+        },
+    )
+
+    request = urllib.request.Request(
+        settings.OPENROUTER_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": settings.FRONTEND_URL,
+            "X-Title": "SneakerLab",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            raw_response = response.read().decode("utf-8")
+            _log_openrouter("Raw Response", raw_response)
+            response_data = json.loads(raw_response)
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="ignore")
+        _log_openrouter("HTTP Error", {"status": e.code, "reason": e.reason, "body": detail})
+        raise HTTPException(status_code=502, detail=f"OpenRouter error: {detail or e.reason}")
+    except Exception as e:
+        _log_openrouter("Request Error", str(e))
+        raise HTTPException(status_code=502, detail=f"OpenRouter request failed: {str(e)}")
+
+    try:
+        content = response_data["choices"][0]["message"]["content"]
+        _log_openrouter("Assistant Content", content)
+        ai_ids = _extract_product_ids(content)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Invalid OpenRouter response: {str(e)}")
+
+    product_ids = []
+    seen = set()
+    for product_id in ai_ids:
+        if product_id in existing_ids and product_id not in seen:
+            product_ids.append(product_id)
+            seen.add(product_id)
+
+    products = get_filtered_products(product_ids=product_ids) if product_ids else []
+    _log_openrouter(
+        "Parsed Product IDs",
+        {
+            "raw_ids": ai_ids,
+            "validated_ids": product_ids,
+            "returned_products_count": len(products),
+        },
+    )
+    return {
+        "query": query,
+        "product_ids": product_ids,
+        "products": products,
+    }
 
 
 @router.get("/{product_id}")
