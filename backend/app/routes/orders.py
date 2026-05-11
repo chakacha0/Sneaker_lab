@@ -5,7 +5,9 @@ from app.repositories.orders_repo import (
     get_order_by_id,
     get_user_orders,
     calculate_order_total_with_promo,
-    get_sales_statistics
+    get_sales_statistics,
+    get_all_orders_admin,
+    update_order_status,
 )
 from app.repositories.cart_repo import get_cart_items, get_or_create_cart
 from datetime import datetime
@@ -47,6 +49,35 @@ def create_order_endpoint(data: dict):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка создания заказа: {str(e)}")
+
+
+@router.get("/admin/list")
+def list_all_orders_admin():
+    """All orders (admin panel)."""
+    try:
+        return get_all_orders_admin()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/admin/{order_id}/status")
+def patch_order_status(order_id: int, data: dict):
+    """Update order status."""
+    status = data.get("status")
+    if not status or not isinstance(status, str):
+        raise HTTPException(status_code=400, detail="Field status is required")
+    try:
+        updated = update_order_status(order_id, status.strip())
+        if not updated:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return {"message": "Status updated", "order": updated}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/{order_id}")
 def get_order(order_id: int):

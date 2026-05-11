@@ -21,6 +21,11 @@ export default function ProductPage() {
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState({ total_reviews: 0, average_rating: 0 });
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [wouldBuyIfAvailable, setWouldBuyIfAvailable] = useState(null);
+
+  useEffect(() => {
+    setWouldBuyIfAvailable(null);
+  }, [id]);
 
   useEffect(() => {
     async function load() {
@@ -151,6 +156,10 @@ export default function ProductPage() {
       </div>
     );
   }
+
+  const hasAnySizeInStock = sizes.some((s) => Number(s.quantity) > 0);
+  const selectedRow = selectedSize != null ? sizes.find((s) => s.size === selectedSize) : null;
+  const selectedOutOfStock = selectedRow != null && Number(selectedRow.quantity) <= 0;
 
   const pageStyle = {
     display: "flex",
@@ -308,10 +317,93 @@ export default function ProductPage() {
         <h1 style={titleStyle}>{product.name}</h1>
         <p style={brandStyle}>{product.brand || "Brand not specified"}</p>
         <h2 style={priceStyle}>
-          {selectedSize !== null && sizes.find(s => s.size === selectedSize)?.quantity === 0
-            ? "Out of stock"
-            : `${product.price} $`}
+          {!hasAnySizeInStock ? (
+            <>
+              <span>{product.price} $</span>
+              <div
+                style={{
+                  fontSize: "18px",
+                  color: "#b3261e",
+                  marginTop: "8px",
+                  fontWeight: 600,
+                  fontFamily: "'Google Sans Flex', sans-serif",
+                }}
+              >
+                Out of stock
+              </div>
+            </>
+          ) : selectedOutOfStock ? (
+            "Out of stock"
+          ) : (
+            `${product.price} $`
+          )}
         </h2>
+
+        {!hasAnySizeInStock && (
+          <div
+            style={{
+              marginTop: "12px",
+              padding: "16px",
+              borderRadius: "12px",
+              border: "1px solid #e0e0e0",
+              background: "#fafafa",
+              fontFamily: "'Google Sans Flex', sans-serif",
+            }}
+          >
+            <p style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#333", lineHeight: 1.5 }}>
+              This product is not in stock right now.
+            </p>
+            <p style={{ margin: "0 0 14px 0", fontSize: "16px", color: "#444", fontWeight: 600, lineHeight: 1.5 }}>
+              Would you buy this product if it were in stock?
+            </p>
+            {wouldBuyIfAvailable === null ? (
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setWouldBuyIfAvailable("yes")}
+                  style={{
+                    flex: 1,
+                    minWidth: "120px",
+                    padding: "10px 18px",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    background: "#FF6B35",
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontFamily: "'Google Sans Flex', sans-serif",
+                  }}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWouldBuyIfAvailable("no")}
+                  style={{
+                    flex: 1,
+                    minWidth: "120px",
+                    padding: "10px 18px",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    background: "#fff",
+                    color: "#333",
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontFamily: "'Google Sans Flex', sans-serif",
+                  }}
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: "15px", color: "#155724", fontWeight: 600 }}>
+                Thanks for your feedback!
+              </p>
+            )}
+          </div>
+        )}
 
         <div style={sizesContainerStyle}>
           <h3 style={sizesTitleStyle}>Sizes</h3>
@@ -343,8 +435,8 @@ export default function ProductPage() {
         <div style={buttonsContainerStyle}>
           <button 
             onClick={handleAddToCart} 
-            style={isAdding ? buttonDisabledStyle : buttonStyle} 
-            disabled={isAdding}
+            style={isAdding || !hasAnySizeInStock ? buttonDisabledStyle : buttonStyle} 
+            disabled={isAdding || !hasAnySizeInStock}
             onMouseEnter={(e) => {
               if (!isAdding) {
                 e.target.style.background = "#FF8C42";

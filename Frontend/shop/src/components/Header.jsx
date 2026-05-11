@@ -124,7 +124,7 @@ const linkStyle = {
     <header style={headerStyle}>
       {/* Логотип */}
       <Link to="/" style={logoStyle}>
-        SNEAKER LAB
+      🌸SNEAKER LAB🌸
       </Link>
 
       {/* Строка поиска */}
@@ -220,6 +220,20 @@ const linkStyle = {
             }}
           >
             Catalog
+          </Link>
+          <Link
+            to="/info"
+            style={linkStyle}
+            onMouseEnter={(e) => {
+              e.target.style.color = "#FF6B35";
+              e.target.style.textShadow = "0 0 8px rgba(255, 107, 53, 0.6)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = linkStyle.color;
+              e.target.style.textShadow = "none";
+            }}
+          >
+            Size guide
           </Link>
         </nav>
 

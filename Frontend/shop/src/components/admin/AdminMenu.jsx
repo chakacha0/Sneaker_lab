@@ -153,6 +153,29 @@ export default function AdminMenu({ activeTab, onTabChange, onLogout }) {
       </div>
 
       <div
+        style={activeTab === "customer-orders" ? activeMenuItemStyle : menuItemStyle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onTabChange("customer-orders");
+        }}
+        onMouseEnter={(e) => {
+          if (activeTab !== "customer-orders") {
+            e.currentTarget.style.background = "rgba(255, 107, 53, 0.1)";
+            e.currentTarget.style.borderColor = "#FF6B35";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (activeTab !== "customer-orders") {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.borderColor = "transparent";
+          }
+        }}
+      >
+        Customer orders
+      </div>
+
+      <div
         style={activeTab === "reports" ? activeMenuItemStyle : menuItemStyle}
         onClick={(e) => {
           e.preventDefault();

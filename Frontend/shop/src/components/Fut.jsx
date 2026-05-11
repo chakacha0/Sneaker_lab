@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Fut() {
 
     const footerStyle = {
@@ -69,11 +71,12 @@ function Fut() {
     return (
         <footer style={footerStyle}>
             <div style={footerTopStyle}>
-                <span style={brandStyle}>SNEAKER LAB</span>
+                <span style={brandStyle}>🌸🌸🌸SNEAKER LAB🌸🌸🌸</span>
                 <span style={sloganStyle}>Your pair — your style</span>
             </div>
 
             <div style={footerLinksStyle}>
+                <Link to="/info" style={footerLinkStyle}>Size guide</Link>
                 <a href="tel:+375291112233" style={footerLinkStyle}>📞 +375 29 111 22 33</a>
                 <a href="mailto:info@sneakerLab.by" style={footerLinkStyle}>✉️ info@sneakerLab.by</a>
                 <a href="https://instagram.com/sneakerLab" target="_blank" rel="noopener noreferrer" style={footerLinkStyle}>📸 Instagram</a>

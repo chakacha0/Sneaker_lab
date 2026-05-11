@@ -1,10 +1,35 @@
 from app.database import get_connection
 from app.repositories.cart_repo import get_cart_items, get_or_create_cart
+
+ALLOWED_ORDER_STATUSES = frozenset(
+    {"processing", "assembled", "handed_to_delivery", "delivered", "cancelled"}
+)
 from app.repositories.promo_codes_repo import get_promo_code_by_code
 from app.repositories.addresses_repo import get_address_by_id
 from app.repositories.users_repo import get_user_by_id
 from app.utils.email_service import send_order_confirmation_email
 from decimal import Decimal
+
+
+def ensure_orders_status_column():
+    """
+    Ensures orders.status exists (ADD COLUMN IF NOT EXISTS).
+    Avoids 500 on /orders/admin/list when migration was not applied manually.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            ALTER TABLE orders
+            ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'processing';
+            """
+        )
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
 
 def calculate_order_total_with_promo(order_total: float, promo_code: str = None):
     """
@@ -136,9 +161,9 @@ def create_order(user_id: int, address_id: int, promo_code: str = None):
         # Создаем заказ (promo_id будет NULL, если промокод не был применен)
         cur.execute(
             """
-            INSERT INTO orders (user_id, address_id, promo_id, total_price)
-            VALUES (%s, %s, %s, %s)
-            RETURNING order_id, user_id, address_id, promo_id, total_price, created_at;
+            INSERT INTO orders (user_id, address_id, promo_id, total_price, status)
+            VALUES (%s, %s, %s, %s, 'processing')
+            RETURNING order_id, user_id, address_id, promo_id, total_price, created_at, status;
             """,
             (user_id, address_id, promo_id, final_total)
         )
@@ -257,6 +282,7 @@ def get_order_by_id(order_id: int):
             o.promo_id,
             o.total_price,
             o.created_at,
+            o.status,
             pc.code AS promo_code
         FROM orders o
         LEFT JOIN promo_codes pc ON o.promo_id = pc.promo_id
@@ -323,6 +349,7 @@ def get_user_orders(user_id: int):
             o.promo_id,
             o.total_price,
             o.created_at,
+            o.status,
             pc.code AS promo_code
         FROM orders o
         LEFT JOIN promo_codes pc ON o.promo_id = pc.promo_id
@@ -362,6 +389,89 @@ def get_user_orders(user_id: int):
     cur.close()
     conn.close()
     return orders
+
+
+def get_all_orders_admin():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT 
+            o.order_id,
+            o.user_id,
+            o.address_id,
+            o.promo_id,
+            o.total_price,
+            o.created_at,
+            o.status,
+            pc.code AS promo_code,
+            u.email,
+            u.first_name,
+            u.last_name
+        FROM orders o
+        LEFT JOIN promo_codes pc ON o.promo_id = pc.promo_id
+        LEFT JOIN users u ON o.user_id = u.user_id
+        ORDER BY o.created_at DESC;
+        """
+    )
+
+    orders = cur.fetchall()
+
+    for order in orders:
+        order_id = order.get("order_id")
+        cur.execute(
+            """
+            SELECT DISTINCT ON (oi.order_item_id)
+                oi.order_item_id,
+                oi.product_id,
+                oi.size,
+                oi.quantity,
+                oi.price_at_purchase,
+                p.name,
+                b.name AS brand,
+                (SELECT image_url FROM product_images WHERE product_id = p.product_id LIMIT 1) AS image_url
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.product_id
+            LEFT JOIN brands b ON p.brand_id = b.brand_id
+            WHERE oi.order_id = %s
+            ORDER BY oi.order_item_id;
+            """,
+            (order_id,),
+        )
+        order["items"] = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return orders
+
+
+def update_order_status(order_id: int, status: str):
+    if status not in ALLOWED_ORDER_STATUSES:
+        raise ValueError(f"Invalid status: {status}")
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        UPDATE orders
+        SET status = %s
+        WHERE order_id = %s
+        RETURNING order_id, user_id, address_id, promo_id, total_price, created_at, status;
+        """,
+        (status, order_id),
+    )
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return None
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row
 
 def get_sales_statistics(start_date=None, end_date=None):
     """

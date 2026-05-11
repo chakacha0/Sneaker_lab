@@ -8,6 +8,7 @@ import AuthModal from "../components/AuthModal";
 import ReviewModal from "../components/ReviewModal";
 import { getImageUrl } from "../utils/imageUrl";
 import { getUserReviewForProduct, getUserReviewForOrderItem } from "../api/reviews";
+import { getOrderStatusLabel } from "../utils/orderStatus";
 
 function Profile() {
   const navigate = useNavigate();
@@ -602,6 +603,19 @@ function Profile() {
                             }}
                           >
                             {formattedDate}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              fontSize: "14px",
+                              color: "#444",
+                              fontFamily: "'Google Sans Flex', sans-serif",
+                            }}
+                          >
+                            Status:{" "}
+                            <strong style={{ color: "#FF6B35" }}>
+                              {getOrderStatusLabel(order.status)}
+                            </strong>
                           </div>
                         </div>
                         <div

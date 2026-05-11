@@ -12,6 +12,7 @@ import Cart from "./pages/Cart";
 import Favourites from "./pages/Favourites";
 import Profile from "./pages/Profile";
 import AdminCabinet from "./pages/AdminCabinet";
+import Info from "./pages/Info";
 
 const pageStyle = {
   display: "flex",
@@ -43,6 +44,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />
+          <Route path="/info" element={<Info />} />
           <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-code" element={<VerifyCode />} />

@@ -65,6 +65,7 @@ class Order(OrderBase):
     """Полная модель заказа"""
     order_id: int
     created_at: datetime
+    status: Optional[str] = "processing"
     promo_code: Optional[str] = None  # Код промокода
     items: List[OrderItem] = []  # Элементы заказа
 

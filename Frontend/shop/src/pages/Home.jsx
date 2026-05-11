@@ -29,8 +29,8 @@ function Home() {
   const sectionStyle = {
     fontFamily: "'Unbounded', sans-serif",
     maxWidth: "1200px",
-    margin: "10px auto 30px auto",
-    padding: "0 20px",
+    margin: "30px auto 0px auto",
+    padding: "0 40px",
   };
 
   const titleStyle = {
@@ -39,8 +39,8 @@ function Home() {
     fontWeight: "700",
     color: "#FF6B35",
     textShadow: "0 0 15px rgba(255, 107, 53, 0.5)",
-    marginBottom: "22px",
-    marginTop: "0",
+    marginBottom: "10px",
+    marginTop: "10px",
     paddingBottom: "5px",
     textTransform: "uppercase",
     letterSpacing: "2px",
@@ -64,7 +64,8 @@ function Home() {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "22px",
+    marginBottom: "10px",
+    marginTop: "20px",
   };
 
   const viewAllButtonStyle = {
@@ -88,7 +89,7 @@ function Home() {
     position: "relative",
     width: "100%",
     maxWidth: "1400px",
-    margin: "0 auto 30px auto",
+    margin: "15px auto 30px auto",
     borderRadius: "12px",
     overflow: "hidden",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",

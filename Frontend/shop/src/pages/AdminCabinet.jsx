@@ -9,13 +9,15 @@ import AdminCategoriesList from "../components/admin/AdminCategoriesList";
 import AdminAdministratorsList from "../components/admin/AdminAdministratorsList";
 import AdminPromoCodesList from "../components/admin/AdminPromoCodesList";
 import AdminReports from "../components/admin/AdminReports";
+import AdminOrdersList from "../components/admin/AdminOrdersList";
 import ProductCard from "../components/ProductCard";
 import ReviewModal from "../components/ReviewModal";
 import { getUserFavourites } from "../api/favourites";
 import { getCart } from "../api/cart";
-import { getUserOrders } from "../api/orders";
+import { getUserOrders, fetchAdminOrders, updateOrderStatus } from "../api/orders";
 import { getUserReviewForProduct, getUserReviewForOrderItem } from "../api/reviews";
 import { getImageUrl } from "../utils/imageUrl";
+import { getOrderStatusLabel } from "../utils/orderStatus";
 import AddBrandModal from "../components/admin/AddBrandModal";
 import EditBrandModal from "../components/admin/EditBrandModal";
 import DeleteBrandConfirmModal from "../components/admin/DeleteBrandConfirmModal";
@@ -143,6 +145,9 @@ function AdminCabinet() {
   const [favourites, setFavourites] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [adminAllOrders, setAdminAllOrders] = useState([]);
+  const [adminAllOrdersLoading, setAdminAllOrdersLoading] = useState(false);
+  const [adminOrderStatusUpdatingId, setAdminOrderStatusUpdatingId] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState(null);
   const [userReviews, setUserReviews] = useState({});
@@ -1062,6 +1067,38 @@ function AdminCabinet() {
     }
   };
 
+  const loadAdminAllOrders = async () => {
+    setAdminAllOrdersLoading(true);
+    try {
+      const data = await fetchAdminOrders();
+      setAdminAllOrders(data || []);
+    } catch (error) {
+      console.error("Failed to load customer orders:", error);
+      setAdminAllOrders([]);
+      setMessage(error.message || "Could not load orders");
+    } finally {
+      setAdminAllOrdersLoading(false);
+    }
+  };
+
+  const handleAdminOrderStatusChange = async (orderId, status) => {
+    setAdminOrderStatusUpdatingId(orderId);
+    setMessage("");
+    try {
+      await updateOrderStatus(orderId, status);
+      setAdminAllOrders((prev) =>
+        prev.map((o) =>
+          o.order_id === orderId ? { ...o, status } : o
+        )
+      );
+    } catch (error) {
+      setMessage(error.message || "Could not update order status");
+      await loadAdminAllOrders();
+    } finally {
+      setAdminOrderStatusUpdatingId(null);
+    }
+  };
+
   const handleTabChange = (tab) => {
     console.log("Switching to tab:", tab);
     setActiveTab(tab);
@@ -1075,6 +1112,8 @@ function AdminCabinet() {
       loadAdmins();
     } else if (tab === "promo-codes") {
       loadPromoCodes();
+    } else if (tab === "customer-orders") {
+      loadAdminAllOrders();
     } else if (user && user.user_id) {
       loadTabData(user.user_id, tab);
     }
@@ -1174,6 +1213,16 @@ function AdminCabinet() {
         )}
 
         {activeTab === "reports" && <AdminReports />}
+
+        {activeTab === "customer-orders" && (
+          <AdminOrdersList
+            orders={adminAllOrders}
+            ordersLoading={adminAllOrdersLoading}
+            onReload={loadAdminAllOrders}
+            onStatusChange={handleAdminOrderStatusChange}
+            updatingOrderId={adminOrderStatusUpdatingId}
+          />
+        )}
 
         {activeTab === "favourites" && (
           <div>
@@ -1348,6 +1397,19 @@ function AdminCabinet() {
                             }}
                           >
                             {formattedDate}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              fontSize: "14px",
+                              color: "#444",
+                              fontFamily: "'Google Sans Flex', sans-serif",
+                            }}
+                          >
+                            Status:{" "}
+                            <strong style={{ color: "#FF6B35" }}>
+                              {getOrderStatusLabel(order.status)}
+                            </strong>
                           </div>
                         </div>
                         <div

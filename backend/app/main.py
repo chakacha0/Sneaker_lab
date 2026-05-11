@@ -1,10 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import products, brands, users, cart, categories, favourites, admins, promo_codes, addresses, orders, reviews
+from app.repositories.orders_repo import ensure_orders_status_column
 from fastapi.staticfiles import StaticFiles
 import os
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+def _bootstrap_orders_status_column():
+    try:
+        ensure_orders_status_column()
+    except Exception as e:
+        print(f"[orders] Could not ensure orders.status column: {e}")
 
 # --- CORS НУЖНО СТАВИТЬ ПЕРВЫМ ---
 app.add_middleware(

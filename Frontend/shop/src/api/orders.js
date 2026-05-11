@@ -41,6 +41,38 @@ export async function getUserOrders(userId) {
   return response.json();
 }
 
+export async function fetchAdminOrders() {
+  const response = await fetch("http://localhost:8000/orders/admin/list", {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Could not load orders");
+  }
+
+  return response.json();
+}
+
+export async function updateOrderStatus(orderId, status) {
+  const response = await fetch(
+    `http://localhost:8000/orders/admin/${orderId}/status`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Could not update status");
+  }
+
+  return response.json();
+}
+
 export async function calculateOrderTotal(userId, promoCode = null) {
   const response = await fetch("http://localhost:8000/orders/calculate-total", {
     method: "POST",

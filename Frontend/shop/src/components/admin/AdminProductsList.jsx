@@ -1,6 +1,21 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { getImageUrl } from "../../utils/imageUrl";
 import { titleStyle, buttonPrimaryStyle } from "./adminStyles";
+
+const filterToggleStyle = (active) => ({
+  padding: "10px 16px",
+  fontSize: "13px",
+  fontWeight: "600",
+  borderRadius: "8px",
+  cursor: "pointer",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  fontFamily: "'Fragment Mono', monospace",
+  border: active ? "2px solid #FF6B35" : "2px solid #ccc",
+  background: active ? "#FF6B35" : "#fff",
+  color: active ? "#000" : "#333",
+  transition: "all 0.2s ease",
+});
 
 export default function AdminProductsList({
   products,
@@ -10,26 +25,60 @@ export default function AdminProductsList({
   onEditProduct,
   onDeleteProduct,
 }) {
+  const [stockListFilter, setStockListFilter] = useState("all");
+
+  const displayedProducts = useMemo(() => {
+    if (stockListFilter === "out_only") {
+      return products.filter((p) => p.has_stock === false);
+    }
+    return products;
+  }, [products, stockListFilter]);
+
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: "16px",
+          marginBottom: "24px",
+        }}
+      >
         <h2 style={{ ...titleStyle, marginBottom: 0, marginTop: "5px" }}>Products</h2>
-        <button
-          onClick={onAddProduct}
-          style={buttonPrimaryStyle}
-          onMouseEnter={(e) => {
-            e.target.style.background = "#FF8C42";
-            e.target.style.transform = "translateY(-2px)";
-            e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = "#FF6B35";
-            e.target.style.transform = "translateY(0)";
-            e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
-          }}
-        >
-          + Add Product
-        </button>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => setStockListFilter("out_only")}
+            style={filterToggleStyle(stockListFilter === "out_only")}
+          >
+            Out of stock only
+          </button>
+          <button
+            type="button"
+            onClick={() => setStockListFilter("all")}
+            style={filterToggleStyle(stockListFilter === "all")}
+          >
+            All products
+          </button>
+          <button
+            onClick={onAddProduct}
+            style={buttonPrimaryStyle}
+            onMouseEnter={(e) => {
+              e.target.style.background = "#FF8C42";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 6px 20px rgba(255, 107, 53, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "#FF6B35";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 15px rgba(255, 107, 53, 0.3)";
+            }}
+          >
+            + Add Product
+          </button>
+        </div>
       </div>
       
       {productsLoading ? (
@@ -37,34 +86,71 @@ export default function AdminProductsList({
           Loading products...
         </div>
       ) : products.length > 0 ? (
+        displayedProducts.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "48px 20px",
+              color: "#666",
+              fontSize: "16px",
+              fontFamily: "'Fragment Mono', monospace",
+              border: "1px dashed #ccc",
+              borderRadius: "12px",
+              background: "#fafafa",
+            }}
+          >
+            <p style={{ margin: 0 }}>No out-of-stock products. Everything has inventory.</p>
+          </div>
+        ) : (
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
           gap: "25px",
           marginTop: "20px"
         }}>
-          {products.map((product) => (
+          {displayedProducts.map((product) => {
+            const outOfStock = product.has_stock === false;
+            return (
             <div
               key={product.product_id}
               style={{
                 background: "#f5f5f5",
                 borderRadius: "12px",
                 padding: "20px",
-                border: "1px solid #ddd",
+                border: outOfStock ? "2px solid #c62828" : "1px solid #ddd",
                 boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
                 transition: "all 0.3s ease",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-5px)";
                 e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
-                e.currentTarget.style.borderColor = "#FF6B35";
+                e.currentTarget.style.borderColor = outOfStock ? "#e53935" : "#FF6B35";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)";
-                e.currentTarget.style.borderColor = "#ddd";
+                e.currentTarget.style.borderColor = outOfStock ? "#c62828" : "#ddd";
               }}
             >
+              {outOfStock && (
+                <div
+                  style={{
+                    marginBottom: "12px",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    background: "#ffebee",
+                    color: "#b71c1c",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    fontFamily: "'Fragment Mono', monospace",
+                    border: "1px solid #ef9a9a",
+                  }}
+                >
+                  Out of stock — order inventory
+                </div>
+              )}
               {product.image_url && (
                 <div style={{
                   width: "100%",
@@ -75,7 +161,7 @@ export default function AdminProductsList({
                   justifyContent: "center",
                   background: "#fff",
                   borderRadius: "8px",
-                  overflow: "hidden"
+                  overflow: "hidden",
                 }}>
                   <img
                     src={getImageUrl(product.image_url)}
@@ -224,8 +310,10 @@ export default function AdminProductsList({
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
+        )
       ) : (
         <div style={{
           textAlign: "center",
