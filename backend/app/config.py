@@ -24,5 +24,3 @@ class Settings:
     OPENROUTER_API_URL = os.getenv("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions")
 
 settings = Settings()
-
-print(os.getenv("DB_PASSWORD"))

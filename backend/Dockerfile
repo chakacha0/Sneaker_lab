@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY migration_add_order_status.sql ./migration_add_order_status.sql
 
+# Каталог для раздачи /api/static (загрузки брендов/товаров); иначе StaticFiles падает при старте
+RUN mkdir -p /app/static
+
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
