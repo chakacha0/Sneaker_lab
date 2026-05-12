@@ -36,9 +36,9 @@ export function getImageUrl(imageUrl) {
   
   // Убираем ведущий /static/ если он есть (FastAPI сам добавляет /static/ при монтировании)
   if (cleanUrl.startsWith('/static/')) {
-    cleanUrl = cleanUrl.substring(7); // Убираем '/static'
+    cleanUrl = cleanUrl.substring('/static/'.length);
   } else if (cleanUrl.startsWith('static/')) {
-    cleanUrl = cleanUrl.substring(6); // Убираем 'static'
+    cleanUrl = cleanUrl.substring('static/'.length);
   }
   
   // Убираем ведущий слэш, если он есть
@@ -47,8 +47,5 @@ export function getImageUrl(imageUrl) {
   }
   
   // Формируем финальный URL: /static/ + путь относительно static директории
-  const fullUrl = `${API_BASE_URL}/static/${cleanUrl}`;
-  console.log(`[getImageUrl] Original: "${imageUrl}" -> Final: "${fullUrl}"`);
-  
-  return fullUrl;
+  return `${API_BASE_URL}/static/${cleanUrl}`;
 }

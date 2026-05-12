@@ -38,7 +38,7 @@ export async function fetchProducts(filters = {}) {
   }
   
   const queryString = params.toString();
-  const url = `${buildApiUrl('products')}${queryString ? '?' + queryString : ''}`;
+  const url = `${buildApiUrl('products/')}${queryString ? '?' + queryString : ''}`;
   
   const response = await fetch(url);
   if (!response.ok) {

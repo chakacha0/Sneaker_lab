@@ -38,10 +38,10 @@ shell-backend:
 	$(COMPOSE) exec backend sh
 
 shell-db:
-	$(COMPOSE) exec db psql -U postgres -d shoeses_shop
+	$(COMPOSE) exec db psql -U postgres -d shoeses_shop -p 5434
 
 migrate:
-	$(COMPOSE) exec -T db psql -U postgres -d shoeses_shop < backend/migration_add_order_status.sql
+	$(COMPOSE) exec -T db psql -U postgres -d shoeses_shop -p 5434 < backend/migration_add_order_status.sql
 
 clean:
 	$(COMPOSE) down -v
