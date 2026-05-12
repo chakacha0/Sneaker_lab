@@ -9,7 +9,6 @@ services:
       POSTGRES_DB: shoeses_shop
     ports:
       - "5434:5434"
-      - "8002:8000"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,12 +25,18 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      DB_HOST: db
       DB_PORT: "5434"
+      DB_NAME: shoeses_shop
+      DB_USER: postgres
+      DB_PASSWORD: postgre
     depends_on:
       db:
         condition: service_healthy
-    network_mode: "service:db"
-    # Не монтируем пустой volume на /app/static — он перекрывает файлы из образа (логотипы брендов и т.д.).
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./backend/static:/app/static
 
   frontend:
     build:
