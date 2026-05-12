@@ -2,17 +2,18 @@ services:
   db:
     image: postgres:16-alpine
     container_name: sneakerlab-db
+    command: ["postgres", "-c", "port=5434"]
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgre
       POSTGRES_DB: shoeses_shop
     ports:
-      - "5434:5432"
+      - "5434:5434"
       - "8002:8000"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d shoeses_shop"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shoeses_shop -p 5434"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,12 +25,13 @@ services:
     container_name: sneakerlab-backend
     env_file:
       - ./backend/.env
+    environment:
+      DB_PORT: "5434"
     depends_on:
       db:
         condition: service_healthy
     network_mode: "service:db"
-    volumes:
-      - backend_static:/app/static
+    # Не монтируем пустой volume на /app/static — он перекрывает файлы из образа (логотипы брендов и т.д.).
 
   frontend:
     build:
@@ -43,4 +45,3 @@ services:
 
 volumes:
   postgres_data:
-  backend_static:
