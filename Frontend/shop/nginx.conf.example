@@ -109,7 +109,7 @@ server {
   }
 
   # Optional backend proxy if you later expose API through the same domain.
-  # The current frontend code calls http://localhost:8000 directly in several places,
+  # The current frontend code calls http://localhost:8002 directly in several places,
   # so this block is a deployment template and may require frontend API URL changes.
   location /api/ {
     proxy_pass http://backend:8000/;

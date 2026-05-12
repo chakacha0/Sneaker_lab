@@ -22,14 +22,14 @@ export function getImageUrl(imageUrl) {
       }
       
       // Формируем правильный URL
-      const backendUrl = 'http://localhost:8000';
+      const backendUrl = 'http://localhost:8002';
       return `${backendUrl}${path}`;
     }
     return imageUrl;
   }
 
   // Если URL относительный, добавляем базовый URL бэкенда
-  const backendUrl = 'http://localhost:8000';
+  const backendUrl = 'http://localhost:8002';
   
   // Нормализуем путь: заменяем обратные слэши на прямые (Windows -> Unix)
   let cleanUrl = imageUrl.trim().replace(/\\/g, '/');

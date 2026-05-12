@@ -2,9 +2,9 @@
 
 ## Services
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- PostgreSQL: localhost:5432
+- Frontend: http://localhost:3002
+- Backend API: http://localhost:8002
+- PostgreSQL: localhost:5434
 
 ## Quick Start
 

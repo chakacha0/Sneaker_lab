@@ -1,5 +1,5 @@
 export async function fetchAdmins() {
-  const response = await fetch("http://localhost:8000/admins/");
+  const response = await fetch("http://localhost:8002/admins/");
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || "Ошибка при получении списка администраторов");
@@ -8,7 +8,7 @@ export async function fetchAdmins() {
 }
 
 export async function searchUsersByEmail(emailQuery) {
-  const response = await fetch(`http://localhost:8000/admins/search-users?email_query=${encodeURIComponent(emailQuery)}`);
+  const response = await fetch(`http://localhost:8002/admins/search-users?email_query=${encodeURIComponent(emailQuery)}`);
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || "Ошибка при поиске пользователей");
@@ -17,7 +17,7 @@ export async function searchUsersByEmail(emailQuery) {
 }
 
 export async function promoteToAdmin(userId) {
-  const response = await fetch(`http://localhost:8000/admins/promote/${userId}`, {
+  const response = await fetch(`http://localhost:8002/admins/promote/${userId}`, {
     method: "POST",
   });
 
@@ -30,7 +30,7 @@ export async function promoteToAdmin(userId) {
 }
 
 export async function removeAdminRole(userId) {
-  const response = await fetch(`http://localhost:8000/admins/remove/${userId}`, {
+  const response = await fetch(`http://localhost:8002/admins/remove/${userId}`, {
     method: "POST",
   });
 
