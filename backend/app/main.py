@@ -49,10 +49,8 @@ app.include_router(api_router)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-# Проверяем существование директории
-if not os.path.exists(STATIC_DIR):
-    print(f"WARNING: Static directory not found: {STATIC_DIR}")
-else:
-    print(f"Static files directory: {STATIC_DIR}")
+# StaticFiles падает, если каталога нет; в образе static может не попасть из git
+os.makedirs(STATIC_DIR, exist_ok=True)
+print(f"Static files directory: {STATIC_DIR}")
 
 app.mount(f"{API_PREFIX}/static", StaticFiles(directory=STATIC_DIR), name="static")
