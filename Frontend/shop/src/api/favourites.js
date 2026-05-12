@@ -1,5 +1,5 @@
 export async function addToFavourites(userId, productId, size = null) {
-  const response = await fetch("http://localhost:8000/favourites/add", {
+  const response = await fetch("http://localhost:8002/favourites/add", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -16,7 +16,7 @@ export async function addToFavourites(userId, productId, size = null) {
 }
 
 export async function removeFromFavourites(userId, productId, size = null) {
-  const response = await fetch("http://localhost:8000/favourites/remove", {
+  const response = await fetch("http://localhost:8002/favourites/remove", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -41,7 +41,7 @@ export async function checkFavourite(userId, productId, size = null) {
     params.append('size', size);
   }
   
-  const response = await fetch(`http://localhost:8000/favourites/check?${params.toString()}`);
+  const response = await fetch(`http://localhost:8002/favourites/check?${params.toString()}`);
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || "Ошибка проверки избранного");
@@ -50,7 +50,7 @@ export async function checkFavourite(userId, productId, size = null) {
 }
 
 export async function getUserFavourites(userId) {
-  const response = await fetch(`http://localhost:8000/favourites/${userId}`);
+  const response = await fetch(`http://localhost:8002/favourites/${userId}`);
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || "Ошибка загрузки избранного");

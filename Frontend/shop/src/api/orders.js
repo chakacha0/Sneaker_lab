@@ -1,5 +1,5 @@
 export async function createOrder(orderData) {
-  const response = await fetch("http://localhost:8000/orders/", {
+  const response = await fetch("http://localhost:8002/orders/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(orderData),
@@ -14,7 +14,7 @@ export async function createOrder(orderData) {
 }
 
 export async function getOrder(orderId) {
-  const response = await fetch(`http://localhost:8000/orders/${orderId}`, {
+  const response = await fetch(`http://localhost:8002/orders/${orderId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -28,7 +28,7 @@ export async function getOrder(orderId) {
 }
 
 export async function getUserOrders(userId) {
-  const response = await fetch(`http://localhost:8000/orders/user/${userId}`, {
+  const response = await fetch(`http://localhost:8002/orders/user/${userId}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -42,7 +42,7 @@ export async function getUserOrders(userId) {
 }
 
 export async function fetchAdminOrders() {
-  const response = await fetch("http://localhost:8000/orders/admin/list", {
+  const response = await fetch("http://localhost:8002/orders/admin/list", {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -57,7 +57,7 @@ export async function fetchAdminOrders() {
 
 export async function updateOrderStatus(orderId, status) {
   const response = await fetch(
-    `http://localhost:8000/orders/admin/${orderId}/status`,
+    `http://localhost:8002/orders/admin/${orderId}/status`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -74,7 +74,7 @@ export async function updateOrderStatus(orderId, status) {
 }
 
 export async function calculateOrderTotal(userId, promoCode = null) {
-  const response = await fetch("http://localhost:8000/orders/calculate-total", {
+  const response = await fetch("http://localhost:8002/orders/calculate-total", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

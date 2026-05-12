@@ -7,8 +7,8 @@ services:
       POSTGRES_PASSWORD: postgre
       POSTGRES_DB: shoeses_shop
     ports:
-      - "5432:5432"
-      - "8000:8000"
+      - "5434:5432"
+      - "8002:8000"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -39,7 +39,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "3002:80"
 
 volumes:
   postgres_data:

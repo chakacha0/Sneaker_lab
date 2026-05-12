@@ -1,5 +1,5 @@
 export async function fetchBrands() {
-    const response = await fetch("http://localhost:8000/brands/");
+    const response = await fetch("http://localhost:8002/brands/");
     return response.json();
 }
 
@@ -17,7 +17,7 @@ export async function createBrand(brandData) {
     formData.append("image", brandData.image);
   }
   
-  const response = await fetch("http://localhost:8000/brands/", {
+  const response = await fetch("http://localhost:8002/brands/", {
     method: "POST",
     body: formData,
   });
@@ -46,7 +46,7 @@ export async function updateBrand(brandId, brandData) {
     formData.append("image", brandData.image);
   }
   
-  const response = await fetch(`http://localhost:8000/brands/${brandId}`, {
+  const response = await fetch(`http://localhost:8002/brands/${brandId}`, {
     method: "PUT",
     body: formData,
   });
@@ -60,7 +60,7 @@ export async function updateBrand(brandId, brandData) {
 }
 
 export async function deleteBrand(brandId) {
-  const response = await fetch(`http://localhost:8000/brands/${brandId}`, {
+  const response = await fetch(`http://localhost:8002/brands/${brandId}`, {
     method: "DELETE",
   });
   

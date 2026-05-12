@@ -1,5 +1,5 @@
 export async function fetchPromoCodes() {
-  const response = await fetch("http://localhost:8000/promo-codes/");
+  const response = await fetch("http://localhost:8002/promo-codes/");
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || "Ошибка получения промокодов");
@@ -8,7 +8,7 @@ export async function fetchPromoCodes() {
 }
 
 export async function createPromoCode(promoCodeData) {
-  const response = await fetch("http://localhost:8000/promo-codes/", {
+  const response = await fetch("http://localhost:8002/promo-codes/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -25,7 +25,7 @@ export async function createPromoCode(promoCodeData) {
 }
 
 export async function updatePromoCode(promoId, promoCodeData) {
-  const response = await fetch(`http://localhost:8000/promo-codes/${promoId}`, {
+  const response = await fetch(`http://localhost:8002/promo-codes/${promoId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -42,7 +42,7 @@ export async function updatePromoCode(promoId, promoCodeData) {
 }
 
 export async function deletePromoCode(promoId) {
-  const response = await fetch(`http://localhost:8000/promo-codes/${promoId}`, {
+  const response = await fetch(`http://localhost:8002/promo-codes/${promoId}`, {
     method: "DELETE",
   });
   

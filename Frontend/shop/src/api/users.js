@@ -1,5 +1,5 @@
 export async function registerUser(userData) {
-  const response = await fetch("http://localhost:8000/users/register", {
+  const response = await fetch("http://localhost:8002/users/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
@@ -14,7 +14,7 @@ export async function registerUser(userData) {
 }
 
 export async function verifyEmail(data) {
-  const response = await fetch(`http://localhost:8000/users/verify-email`, {
+  const response = await fetch(`http://localhost:8002/users/verify-email`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -29,7 +29,7 @@ export async function verifyEmail(data) {
 }
 
 export async function loginUser(credentials) {
-  const response = await fetch("http://localhost:8000/users/login", {
+  const response = await fetch("http://localhost:8002/users/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
