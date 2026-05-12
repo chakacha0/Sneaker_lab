@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config/api.js';
+
 /**
  * Преобразует URL изображения в полный URL бэкенда
  * Если URL уже полный (начинается с http:// или https://), возвращает как есть
@@ -22,14 +24,12 @@ export function getImageUrl(imageUrl) {
       }
       
       // Формируем правильный URL
-      const backendUrl = 'http://localhost:8002';
-      return `${backendUrl}${path}`;
+      return `${API_BASE_URL}${path}`;
     }
     return imageUrl;
   }
 
   // Если URL относительный, добавляем базовый URL бэкенда
-  const backendUrl = 'http://localhost:8002';
   
   // Нормализуем путь: заменяем обратные слэши на прямые (Windows -> Unix)
   let cleanUrl = imageUrl.trim().replace(/\\/g, '/');
@@ -47,7 +47,7 @@ export function getImageUrl(imageUrl) {
   }
   
   // Формируем финальный URL: /static/ + путь относительно static директории
-  const fullUrl = `${backendUrl}/static/${cleanUrl}`;
+  const fullUrl = `${API_BASE_URL}/static/${cleanUrl}`;
   console.log(`[getImageUrl] Original: "${imageUrl}" -> Final: "${fullUrl}"`);
   
   return fullUrl;

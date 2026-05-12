@@ -1,5 +1,7 @@
+import { buildApiUrl } from '../config/api.js';
+
 export async function createAddress(addressData) {
-  const response = await fetch("http://localhost:8002/addresses/", {
+  const response = await fetch(buildApiUrl('addresses/'), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(addressData),
@@ -14,7 +16,7 @@ export async function createAddress(addressData) {
 }
 
 export async function getUserAddresses(userId) {
-  const response = await fetch(`http://localhost:8002/addresses/user/${userId}`, {
+  const response = await fetch(buildApiUrl(`addresses/user/${userId}`), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -28,7 +30,7 @@ export async function getUserAddresses(userId) {
 }
 
 export async function getAddress(addressId) {
-  const response = await fetch(`http://localhost:8002/addresses/${addressId}`, {
+  const response = await fetch(buildApiUrl(`addresses/${addressId}`), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });

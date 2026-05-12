@@ -33,7 +33,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend/shop
+      context: ./Frontend/shop
       dockerfile: Dockerfile
     container_name: sneakerlab-frontend
     depends_on:

@@ -1,5 +1,7 @@
+import { buildApiUrl } from '../config/api.js';
+
 export async function addToCart(userId, productId, size, quantity = 1) {
-  const response = await fetch("http://localhost:8002/cart/add", {
+  const response = await fetch(buildApiUrl('cart/add'), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -19,7 +21,7 @@ export async function addToCart(userId, productId, size, quantity = 1) {
 }
 
 export async function getCart(userId) {
-  const response = await fetch(`http://localhost:8002/cart/${userId}`, {
+  const response = await fetch(buildApiUrl(`cart/${userId}`), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -33,7 +35,7 @@ export async function getCart(userId) {
 }
 
 export async function removeCartItem(cartItemId) {
-  const response = await fetch(`http://localhost:8002/cart/item/${cartItemId}`, {
+  const response = await fetch(buildApiUrl(`cart/item/${cartItemId}`), {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
   });
@@ -47,7 +49,7 @@ export async function removeCartItem(cartItemId) {
 }
 
 export async function updateCartItemQuantity(cartItemId, quantity) {
-  const response = await fetch(`http://localhost:8002/cart/item/${cartItemId}`, {
+  const response = await fetch(buildApiUrl(`cart/item/${cartItemId}`), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ quantity }),

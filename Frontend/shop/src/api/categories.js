@@ -1,5 +1,7 @@
+import { buildApiUrl } from '../config/api.js';
+
 export async function fetchCategories() {
-  const response = await fetch("http://localhost:8002/categories/");
+  const response = await fetch(buildApiUrl('categories/'));
   return response.json();
 }
 
@@ -7,7 +9,7 @@ export async function createCategory(categoryData) {
   const formData = new FormData();
   formData.append("name", categoryData.name);
 
-  const response = await fetch("http://localhost:8002/categories/", {
+  const response = await fetch(buildApiUrl('categories/'), {
     method: "POST",
     body: formData,
   });
@@ -24,7 +26,7 @@ export async function updateCategory(categoryId, categoryData) {
   const formData = new FormData();
   formData.append("name", categoryData.name);
 
-  const response = await fetch(`http://localhost:8002/categories/${categoryId}`, {
+  const response = await fetch(buildApiUrl(`categories/${categoryId}`), {
     method: "PUT",
     body: formData,
   });
@@ -38,7 +40,7 @@ export async function updateCategory(categoryId, categoryData) {
 }
 
 export async function deleteCategory(categoryId) {
-  const response = await fetch(`http://localhost:8002/categories/${categoryId}`, {
+  const response = await fetch(buildApiUrl(`categories/${categoryId}`), {
     method: "DELETE",
   });
 
@@ -51,7 +53,7 @@ export async function deleteCategory(categoryId) {
 }
 
 export async function checkCategoryProducts(categoryId) {
-  const response = await fetch(`http://localhost:8002/categories/${categoryId}/has-products`);
+  const response = await fetch(buildApiUrl(`categories/${categoryId}/has-products`));
   
   if (!response.ok) {
     const error = await response.json();
