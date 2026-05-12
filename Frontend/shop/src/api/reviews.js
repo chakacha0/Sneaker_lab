@@ -1,5 +1,7 @@
+import { buildApiUrl } from '../config/api.js';
+
 export async function createReview(reviewData) {
-  const response = await fetch("http://localhost:8002/reviews/", {
+  const response = await fetch(buildApiUrl('reviews/'), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(reviewData),
@@ -14,7 +16,7 @@ export async function createReview(reviewData) {
 }
 
 export async function getProductReviews(productId) {
-  const response = await fetch(`http://localhost:8002/reviews/product/${productId}`, {
+  const response = await fetch(buildApiUrl(`reviews/product/${productId}`), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -28,7 +30,7 @@ export async function getProductReviews(productId) {
 }
 
 export async function getProductReviewStats(productId) {
-  const response = await fetch(`http://localhost:8002/reviews/product/${productId}/stats`, {
+  const response = await fetch(buildApiUrl(`reviews/product/${productId}/stats`), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -42,7 +44,7 @@ export async function getProductReviewStats(productId) {
 }
 
 export async function getUserReviewForProduct(userId, productId, orderItemId = null) {
-  let url = `http://localhost:8002/reviews/user/${userId}/product/${productId}`;
+  let url = buildApiUrl(`reviews/user/${userId}/product/${productId}`);
   if (orderItemId) {
     url += `?order_item_id=${orderItemId}`;
   }
@@ -61,7 +63,7 @@ export async function getUserReviewForProduct(userId, productId, orderItemId = n
 }
 
 export async function getUserReviewForOrderItem(userId, orderItemId) {
-  const response = await fetch(`http://localhost:8002/reviews/user/${userId}/order-item/${orderItemId}`, {
+  const response = await fetch(buildApiUrl(`reviews/user/${userId}/order-item/${orderItemId}`), {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
@@ -76,7 +78,7 @@ export async function getUserReviewForOrderItem(userId, orderItemId) {
 }
 
 export async function updateReview(reviewId, reviewData) {
-  const response = await fetch(`http://localhost:8002/reviews/${reviewId}`, {
+  const response = await fetch(buildApiUrl(`reviews/${reviewId}`), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(reviewData),
@@ -91,7 +93,7 @@ export async function updateReview(reviewId, reviewData) {
 }
 
 export async function deleteReview(reviewId, userId) {
-  const response = await fetch(`http://localhost:8002/reviews/${reviewId}`, {
+  const response = await fetch(buildApiUrl(`reviews/${reviewId}`), {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user_id: userId }),

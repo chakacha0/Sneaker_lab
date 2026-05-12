@@ -1,3 +1,5 @@
+import { buildApiUrl } from '../config/api.js';
+
 export async function fetchProducts(filters = {}) {
   // Строим query параметры
   const params = new URLSearchParams();
@@ -36,7 +38,7 @@ export async function fetchProducts(filters = {}) {
   }
   
   const queryString = params.toString();
-  const url = `http://localhost:8002/products${queryString ? '?' + queryString : ''}`;
+  const url = `${buildApiUrl('products')}${queryString ? '?' + queryString : ''}`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -47,7 +49,7 @@ export async function fetchProducts(filters = {}) {
 }
 
 export async function fetchAiProductRecommendations(query, previousQuery = "") {
-  const response = await fetch("http://localhost:8002/products/ai-recommendations", {
+  const response = await fetch(buildApiUrl('products/ai-recommendations'), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -73,27 +75,27 @@ export async function fetchAiProductRecommendations(query, previousQuery = "") {
 }
 
 export async function fetchPriceRange() {
-  const response = await fetch("http://localhost:8002/products/price-range");
+  const response = await fetch(buildApiUrl('products/price-range'));
   return response.json();
 }
 
 export async function fetchAvailableSizes() {
-  const response = await fetch("http://localhost:8002/products/available-sizes");
+  const response = await fetch(buildApiUrl('products/available-sizes'));
   return response.json();
 }
 
 export async function fetchProduct(productId) {
-  const res = await fetch(`http://localhost:8002/products/${productId}`);
+  const res = await fetch(buildApiUrl(`products/${productId}`));
   return res.json();
 }
 
 export async function fetchProductSizes(productId) {
-  const res = await fetch(`http://localhost:8002/products/${productId}/sizes`);
+  const res = await fetch(buildApiUrl(`products/${productId}/sizes`));
   return res.json();
 }
 
 export async function addProductStock(productId, size, quantity) {
-  const response = await fetch(`http://localhost:8002/products/${productId}/stock`, {
+  const response = await fetch(buildApiUrl(`products/${productId}/stock`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -143,7 +145,7 @@ export async function updateProduct(productId, productData) {
     formData.append("image", productData.image);
   }
   
-  const response = await fetch(`http://localhost:8002/products/${productId}`, {
+  const response = await fetch(buildApiUrl(`products/${productId}`), {
     method: "PUT",
     body: formData,
   });
@@ -157,7 +159,7 @@ export async function updateProduct(productId, productData) {
 }
 
 export async function deleteProduct(productId) {
-  const response = await fetch(`http://localhost:8002/products/${productId}`, {
+  const response = await fetch(buildApiUrl(`products/${productId}`), {
     method: "DELETE",
   });
   
@@ -170,7 +172,7 @@ export async function deleteProduct(productId) {
 }
 
 export async function checkProductStock(productId) {
-  const response = await fetch(`http://localhost:8002/products/${productId}/has-stock`);
+  const response = await fetch(buildApiUrl(`products/${productId}/has-stock`));
   
   if (!response.ok) {
     const error = await response.json();
@@ -181,7 +183,7 @@ export async function checkProductStock(productId) {
 }
 
 export async function searchProducts(query) {
-  const response = await fetch(`http://localhost:8002/products/search?q=${encodeURIComponent(query)}`);
+  const response = await fetch(`${buildApiUrl('products/search')}?q=${encodeURIComponent(query)}`);
   if (!response.ok) {
     let errorMessage = "Ошибка поиска";
     try {
@@ -218,7 +220,7 @@ export async function createProduct(productData) {
     formData.append("image", productData.image);
   }
   
-  const response = await fetch("http://localhost:8002/products/", {
+  const response = await fetch(buildApiUrl('products/'), {
     method: "POST",
     body: formData,
   });

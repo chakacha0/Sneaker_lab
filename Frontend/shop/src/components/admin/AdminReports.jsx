@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { titleStyle, labelStyle } from "./adminStyles";
+import { buildApiUrl } from "../../config/api.js";
 
 export default function AdminReports() {
   const [startDate, setStartDate] = useState("");
@@ -11,7 +12,7 @@ export default function AdminReports() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      let url = "http://localhost:8002/orders/reports/sales?";
+      let url = `${buildApiUrl('orders/reports/sales')}?`;
       if (startDate) url += `start_date=${startDate}&`;
       if (endDate) url += `end_date=${endDate}&`;
       
@@ -31,7 +32,7 @@ export default function AdminReports() {
   const generateExcelReport = async () => {
     setIsGenerating(true);
     try {
-      let url = "http://localhost:8002/orders/reports/sales/excel?";
+      let url = `${buildApiUrl('orders/reports/sales/excel')}?`;
       if (startDate) url += `start_date=${startDate}&`;
       if (endDate) url += `end_date=${endDate}&`;
       
